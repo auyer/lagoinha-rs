@@ -3,7 +3,6 @@ extern crate serde_json;
 extern crate serde;
 
 use curl::easy::{Easy, List};
-// use hyper_tls::HttpsConnector;
 
 use serde::{Serialize, Deserialize};
 
@@ -32,22 +31,17 @@ pub async fn request(cep : String) -> Result<Address, hyper::Error>{
 #[derive(Serialize, Deserialize)]
 pub struct Address {
     #[serde(rename = "cep")]
-    cep: String,
-
+    pub cep: String,
     #[serde(rename = "uf")]
-    localidade: String,
-
+    pub state: String,
     #[serde(rename = "cidade")]
-    cidade: String,
-
+    pub city: String,
     #[serde(rename = "bairro")]
-    bairro: String,
-
+    pub neighborhood: String,
     #[serde(rename = "logradouro")]
-    logradouro: String,
-
+    pub address: String,
     #[serde(rename = "aux")]
-    aux: String,
+    pub details: String,
 }
 
 #[cfg(test)]
@@ -57,28 +51,20 @@ mod tests {
     async fn valid_cepla() {
         let resaddr = super::request(String::from("70150903")).await.unwrap();
         
-        // let addr = super::Address {
-        //     cep: "04569-901".to_string(),
-        //     logradouro: "Rua Guaraiúva 553".to_string(),
-        //     bairro: "Cidade Monções".to_string(),
-        //     loca
-        //     cidade: "São Paulo".to_string(),
-        //     aux: "".to_string(),
-        // };
         let addr = super::Address {
             cep: "70150903".to_string(),
-            localidade: "DF".to_string(),
-            cidade: "Brasília".to_string(),
-            bairro: "Zona Cívico-Administrativa".to_string(),
-            logradouro: "SPP".to_string(),
-            aux: "Palácio da Alvorada (Residência Oficial do Presidente da República)".to_string(),
+            state: "DF".to_string(),
+            city: "Brasília".to_string(),
+            neighborhood: "Zona Cívico-Administrativa".to_string(),
+            address: "SPP".to_string(),
+            details: "Palácio da Alvorada (Residência Oficial do Presidente da República)".to_string(),
         };
 
-        assert_eq!(addr.logradouro, resaddr.logradouro);
-        assert_eq!(addr.aux, resaddr.aux);
-        assert_eq!(addr.localidade, resaddr.localidade);
-        assert_eq!(addr.bairro, resaddr.bairro);
-        assert_eq!(addr.cidade, resaddr.cidade);
+        assert_eq!(addr.address, resaddr.address);
+        assert_eq!(addr.state, resaddr.state);
+        assert_eq!(addr.neighborhood, resaddr.neighborhood);
+        assert_eq!(addr.city, resaddr.city);
         assert_eq!(addr.cep, resaddr.cep);
+        assert_eq!(addr.details, resaddr.details);
     }
 }
