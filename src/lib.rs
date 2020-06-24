@@ -1,39 +1,58 @@
+pub mod services;
+use services::Address;
 
-// use super::services;
-mod services;
-pub use services::viacep;
-pub async fn get_address(cep : &str) -> Result<viacep::Address, hyper::Error>{
-    let addr = viacep::request(String::from(cep)).await?;
-    return Ok(addr)
-    // return Ok(
+use futures::channel::mpsc;
+use futures::{
+    future::FutureExt,
+    sink::SinkExt,
+};
+
+async fn viacep_requet(cep : &str, mut  tx: mpsc::Sender<Address>){
+    return tx.send(services::viacep::request(cep).await.unwrap().to_address()).await.unwrap()
 }
 
+async fn cepla_requet(cep : &str, mut  tx: mpsc::Sender<Address>){
+    return tx.send(services::cepla::request(cep).await.unwrap().to_address()).await.unwrap()
+}
+
+async fn correios_requet(cep : &str, mut  tx: mpsc::Sender<Address>){
+    return tx.send(services::correios::request(cep).await.unwrap().to_address()).await.unwrap()
+}
+
+pub async fn get_address(cep: &str) -> Address{
+    let (tx, mut rx) = mpsc::channel::<services::Address>(1);
+
+    futures::select!{
+        () = viacep_requet(cep, tx.clone()).fuse() => "viacep", 
+        () = cepla_requet(cep, tx.clone()).fuse() => "cepla", 
+        () = correios_requet(cep, tx.clone()).fuse() => "correios",
+        default => unreachable!()
+    };
+
+    let read = rx.try_next().unwrap().unwrap();
+    read
+}
 
 #[cfg(test)]
 mod tests {
+
     #[tokio::test]
-    async fn it_works() {
-        let resaddr = super::get_address("04569901").await.unwrap();
-        
-        let addr = super::viacep::Address {
-            cep: "04569-901".to_string(),
-            uf: "DF".to_string(),
-            logradouro: "Rua Guaraiúva 553".to_string(),
-            complemento: "".to_string(),
-            bairro: "Cidade Monções".to_string(),
-            localidade: "São Paulo".to_string(),
-            unidade: "".to_string(),
-            ibge: "3550308".to_string(),
-            gia: "1004".to_string(),
+    async fn test_channels() {
+
+        let addr = super::services::Address {
+            cep: "70150903".to_string(),
+            address: "SPP".to_string(),
+            details: "".to_string(),
+            neighborhood: "Zona Cívico-Administrativa".to_string(),
+            city: "Brasília".to_string(),
+            state: "DF".to_string(),
         };
 
-        // println!("{:#?}", addr);
-        assert_eq!(addr.logradouro, resaddr.logradouro);
-        assert_eq!(addr.complemento, resaddr.complemento);
-        assert_eq!(addr.bairro, resaddr.bairro);
-        assert_eq!(addr.unidade, resaddr.unidade);
-        assert_eq!(addr.ibge, resaddr.ibge);
-        assert_eq!(addr.gia, resaddr.gia);
-        // assert_eq!("123", super::get_address("123").await.unwrap());
+        let recv_addr = super::get_address("70150903").await;
+        assert_eq!(addr.city, recv_addr.city);
+        assert_eq!(addr.state, recv_addr.state);
+        assert_eq!(addr.neighborhood, recv_addr.neighborhood);
+        // the other fields, like cep can come with different formating
     }
+
 }
