@@ -7,9 +7,9 @@ use curl::easy::{Easy, List};
 use serde::{Serialize, Deserialize};
 
 
-pub async fn request(cep : String) -> Result<Address, hyper::Error>{
+pub async fn request(cep : &str) -> Result<Address, hyper::Error>{
     let mut requester = Easy::new();
-    let uri = format!("http://cep.la/{}",cep.as_str());
+    let uri = format!("http://cep.la/{}",cep);
     requester.url(&uri).unwrap();
     let mut list = List::new();
     list.append("Accept: application/json").unwrap();
@@ -28,7 +28,7 @@ pub async fn request(cep : String) -> Result<Address, hyper::Error>{
     return Ok(address)
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Address {
     #[serde(rename = "cep")]
     pub cep: String,
@@ -49,7 +49,7 @@ mod tests {
     // use viacep;
     #[tokio::test]
     async fn valid_cepla() {
-        let resaddr = super::request(String::from("70150903")).await.unwrap();
+        let resaddr = super::request("70150903").await.unwrap();
         
         let addr = super::Address {
             cep: "70150903".to_string(),
