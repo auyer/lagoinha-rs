@@ -1,5 +1,5 @@
 [package]
-name = "lagoinha-rs"
+name = "lagoinha"
 version = "0.1.0"
 authors = ["Auyer <rafael@rcpassos.me>"]
 edition = "2018"
