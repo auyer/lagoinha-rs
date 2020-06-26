@@ -28,7 +28,7 @@ Lagoinha é basicamente um pacote que usa as APIs públicas para pegar o endere�
 ### Instalação
 
 ```toml
-lagoinha-rs = "0.5"
+lagoinha-rs = "0.1"
 ```
 
 ### Como usar
