@@ -1,3 +1,7 @@
+//! Correios service: http://www.buscacep.correios.com.br/sistemas/buscacep/BuscaCepEndereco.cfm
+//! 
+//! the call to this service uses Hyper as its HTTP library
+
 extern crate hyper;
 extern crate hyper_tls;
 extern crate serde;
@@ -10,6 +14,7 @@ use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 
+/// request function runs the API call to correios service
 pub async fn request(cep: &str) -> Result<Address, hyper::Error> {
     // This is where we will setup our HTTP client requests.
     // Still inside `async fn main`...
@@ -44,7 +49,6 @@ pub async fn request(cep: &str) -> Result<Address, hyper::Error> {
 
     let resp = client.request(request).await?;
     let data = hyper::body::to_bytes(resp).await?;
-    println!("{}", std::str::from_utf8(&data).unwrap());
 
     let correios_data: BodyTag = serde_xml_rs::from_reader(data.reader()).unwrap();
     return Ok(correios_data.body_tag.consult_tag.return_tag);
@@ -70,7 +74,7 @@ struct ReturnTag {
     pub return_tag: Address,
 }
 
-// Address
+/// Address struct used to deserialize the results from the correios API
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Address {
     #[serde(rename = "cep")]

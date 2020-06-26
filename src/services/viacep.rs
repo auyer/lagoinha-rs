@@ -1,3 +1,7 @@
+//! Viacep service: https://viacep.com.br/
+//! 
+//! the call to this service uses Hyper as its HTTP library
+
 extern crate hyper;
 extern crate hyper_tls;
 extern crate serde_json;
@@ -8,31 +12,27 @@ use hyper_tls::HttpsConnector;
 
 use serde::{Serialize, Deserialize};
 
-
+/// request function runs the API call to Viacep service
 pub async fn request(cep : &str) -> Result<Address, hyper::Error>{
     // This is where we will setup our HTTP client requests.
     // Still inside `async fn main`...
     let https = HttpsConnector::new();
     let client = Client::builder().build::<_, hyper::Body>(https);
-    // let client = Client::new();
 
     // Parse an `http::Uri`...
     let uri =  format!("https://viacep.com.br/ws/{}/json/",cep).parse().unwrap();
 
     // Await the response...
     let resp = client.get(uri).await?;
-
-    println!("Response: {}", resp.status());
     
     let data = hyper::body::to_bytes(resp).await?;
-
-    println!("{}", std::str::from_utf8(&data).unwrap());
 
     let address = serde_json::from_slice::<Address>(&data).unwrap();
 
     return Ok(address)
 }
 
+/// Address struct used to deserialize the results from the viacep API
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Address {
     #[serde(rename = "cep")]
@@ -57,7 +57,6 @@ pub struct Address {
 
 #[cfg(test)]
 mod tests {
-    // use viacep;
     #[tokio::test]
     async fn valid_viacep() {
         let resaddr = super::request("70150903").await.unwrap();

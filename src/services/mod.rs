@@ -5,7 +5,7 @@ pub mod correios;
 extern crate serde;
 use serde::{Serialize, Deserialize};
 
-// Should this struct be of Strings or strs ?
+/// Address struct is the unified response for this package. All other services have a conversion function to it.
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Address {
     pub cep: String,
@@ -16,7 +16,9 @@ pub struct Address {
     pub city: String,
 }
 
+
 impl viacep::Address {
+    /// to_address implementtion converts services::viacep::Address to services::Address
     pub fn to_address(&self) -> Address{
         let addr = Address {
             cep: self.cep.clone(),
@@ -31,6 +33,7 @@ impl viacep::Address {
 }
 
 impl correios::Address {
+    /// to_address implementtion converts services::correios::Address to services::Address
     pub fn to_address(&self) -> Address{
         let addr = Address {
             cep: self.cep.clone(),
@@ -45,6 +48,7 @@ impl correios::Address {
 }
 
 impl cepla::Address {
+    /// to_address implementtion converts services::cepla::Address to services::Address
     pub fn to_address(&self) -> Address{
         let addr = Address {
             cep: self.cep.clone(),

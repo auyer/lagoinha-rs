@@ -1,3 +1,10 @@
+//! CepLá service: http://cep.la/
+//! 
+//! This service has an out os [spec](https://tools.ietf.org/html/rfc2616#section-4.2) header implementation,
+//! and does not comply with the [RFC2616](https://tools.ietf.org/html/rfc2616#section-4.2).
+//! This causes an issue when using it with libraries, like Hyper, because they parse all headers to lower case.  
+//! To solve this issue, the Curl library was used.
+ 
 extern crate curl;
 extern crate serde_json;
 extern crate serde;
@@ -6,7 +13,7 @@ use curl::easy::{Easy, List};
 
 use serde::{Serialize, Deserialize};
 
-
+/// request function runs the API call to cepla service
 pub async fn request(cep : &str) -> Result<Address, hyper::Error>{
     let mut requester = Easy::new();
     let uri = format!("http://cep.la/{}",cep);
@@ -23,11 +30,12 @@ pub async fn request(cep : &str) -> Result<Address, hyper::Error>{
         }).unwrap();
         transfer.perform().unwrap();
     }
-    println!("{}", std::str::from_utf8(&buf).unwrap());
+
     let address = serde_json::from_slice::<Address>(&buf).unwrap();
     return Ok(address)
 }
 
+/// Address struct used to deserialize the results from the cepla API
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Address {
     #[serde(rename = "cep")]
