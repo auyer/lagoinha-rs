@@ -77,15 +77,15 @@ struct ReturnTag {
 /// Address struct used to deserialize the results from the correios API
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Address {
-    #[serde(rename = "cep")]
+    #[serde(rename = "cep", default = "String::new")]
     pub cep: String,
-    #[serde(rename = "uf")]
+    #[serde(rename = "uf", default = "String::new")]
     pub state: String,
-    #[serde(rename = "cidade")]
+    #[serde(rename = "cidade", default = "String::new")]
     pub city: String,
-    #[serde(rename = "bairro")]
+    #[serde(rename = "bairro", default = "String::new")]
     pub neighborhood: String,
-    #[serde(rename = "end")]
+    #[serde(rename = "end", default = "String::new")]
     pub address: String,
 }
 

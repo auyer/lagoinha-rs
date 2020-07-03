@@ -38,23 +38,22 @@ pub async fn request(cep : &str) -> Result<Address, hyper::Error>{
 /// Address struct used to deserialize the results from the cepla API
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Address {
-    #[serde(rename = "cep")]
+    #[serde(rename = "cep", default = "String::new")]
     pub cep: String,
-    #[serde(rename = "uf")]
+    #[serde(rename = "uf", default = "String::new")]
     pub state: String,
-    #[serde(rename = "cidade")]
+    #[serde(rename = "cidade", default = "String::new")]
     pub city: String,
-    #[serde(rename = "bairro")]
+    #[serde(rename = "bairro", default = "String::new")]
     pub neighborhood: String,
-    #[serde(rename = "logradouro")]
+    #[serde(rename = "logradouro", default = "String::new")]
     pub address: String,
-    #[serde(rename = "aux")]
+    #[serde(rename = "aux", default = "String::new")]
     pub details: String,
 }
 
 #[cfg(test)]
 mod tests {
-    // use viacep;
     #[tokio::test]
     async fn valid_cepla() {
         let resaddr = super::request("70150903").await.unwrap();

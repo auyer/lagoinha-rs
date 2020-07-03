@@ -35,23 +35,23 @@ pub async fn request(cep : &str) -> Result<Address, hyper::Error>{
 /// Address struct used to deserialize the results from the viacep API
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Address {
-    #[serde(rename = "cep")]
+    #[serde(rename = "cep", default = "String::new")]
     pub cep: String,
-    #[serde(rename = "logradouro")]
+    #[serde(rename = "logradouro", default = "String::new")]
     pub address: String,
-    #[serde(rename = "complemento")]
+    #[serde(rename = "complemento", default = "String::new")]
     pub details: String,
-    #[serde(rename = "bairro")]
+    #[serde(rename = "bairro", default = "String::new")]
     pub neighborhood: String,
-    #[serde(rename = "uf")]
+    #[serde(rename = "uf", default = "String::new")]
     pub state: String,
-    #[serde(rename = "localidade")]
+    #[serde(rename = "localidade", default = "String::new")]
     pub city: String,
-    #[serde(rename = "unidade")]
+    #[serde(rename = "unidade", default = "String::new")]
     pub unidade: String,
-    #[serde(rename = "ibge")]
+    #[serde(rename = "ibge", default = "String::new")]
     pub ibge: String,
-    #[serde(rename = "gia")]
+    #[serde(rename = "gia", default = "String::new")]
     pub gia: String,
 }
 
