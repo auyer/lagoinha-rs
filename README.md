@@ -43,6 +43,19 @@ async fn main() {
     println!("{:#?}", addr);
 }
 ```
+
+
+### Run Examples
+Check the [examples folder](examples/) ! 
+To run them, use the commands below.
+```bash
+# these examples can be run with a specific CEP (or leave blank for default value)
+cargo run --example get_address 20940040
+cargo run --example standalone_services 20940040
+
+```
+
+
 ---
 ## Todo
 
