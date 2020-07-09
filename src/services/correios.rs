@@ -15,7 +15,7 @@ use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 
 /// request function runs the API call to correios service
-pub async fn request(cep: &str) -> Result<Address, hyper::Error> {
+pub async fn request(cep: &str) -> Result<Address, Box<dyn std::error::Error>>  {
     // This is where we will setup our HTTP client requests.
     // Still inside `async fn main`...
     let https = HttpsConnector::new();
@@ -23,8 +23,7 @@ pub async fn request(cep: &str) -> Result<Address, hyper::Error> {
     // Parse an `http::Uri`...
     let uri : hyper::Uri = hyper::Uri::from_str(
         "https://apps.correios.com.br/SigepMasterJPA/AtendeClienteService/AtendeCliente?wsdl",
-    )
-    .unwrap();
+    )?;
     
     let payload = format!(
         r#"
@@ -44,13 +43,12 @@ pub async fn request(cep: &str) -> Result<Address, hyper::Error> {
         .header("content-type", "application/soap+xml;charset=utf-8")
         .header("cache-control", "no-cache")
         .uri(uri)
-        .body(hyper::Body::from(payload))
-        .unwrap();
+        .body(hyper::Body::from(payload))?;
 
     let resp = client.request(request).await?;
     let data = hyper::body::to_bytes(resp).await?;
 
-    let correios_data: BodyTag = serde_xml_rs::from_reader(data.reader()).unwrap();
+    let correios_data: BodyTag = serde_xml_rs::from_reader(data.reader())?;
     return Ok(correios_data.body_tag.consult_tag.return_tag);
 }
 

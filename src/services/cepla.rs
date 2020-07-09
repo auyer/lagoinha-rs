@@ -14,12 +14,12 @@ use curl::easy::{Easy, List};
 use serde::{Serialize, Deserialize};
 
 /// request function runs the API call to cepla service
-pub async fn request(cep : &str) -> Result<Address, hyper::Error>{
+pub async fn request(cep : &str) -> Result<Address,  Box<dyn std::error::Error>> {
     let mut requester = Easy::new();
     let uri = format!("http://cep.la/{}",cep);
     requester.url(&uri).unwrap();
     let mut list = List::new();
-    list.append("Accept: application/json").unwrap();
+    list.append("Accept: application/json")?;
     requester.http_headers(list).unwrap();
     let mut buf = Vec::new();
     {
@@ -31,7 +31,7 @@ pub async fn request(cep : &str) -> Result<Address, hyper::Error>{
         transfer.perform().unwrap();
     }
 
-    let address = serde_json::from_slice::<Address>(&buf).unwrap();
+    let address = serde_json::from_slice::<Address>(&buf)?;
     return Ok(address)
 }
 

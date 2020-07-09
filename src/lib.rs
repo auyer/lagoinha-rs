@@ -26,6 +26,7 @@
 pub mod services;
 use services::Address;
 
+use std::error::Error;
 use futures::channel::mpsc;
 use futures::{
     future::FutureExt,
@@ -44,7 +45,7 @@ async fn correios_requet(cep : &str, mut  tx: mpsc::Sender<Address>){
     return tx.send(services::correios::request(cep).await.unwrap().to_address()).await.unwrap()
 }
 
-pub async fn get_address(cep: &str) -> Address{
+pub async fn get_address(cep: &str) -> Result<Address, Box<dyn std::error::Error>> {
     let (tx, mut rx) = mpsc::channel::<services::Address>(1);
 
     futures::select!{
@@ -55,7 +56,7 @@ pub async fn get_address(cep: &str) -> Address{
     };
 
     let read = rx.try_next().unwrap().unwrap();
-    read
+    Ok(read)
 }
 
 #[cfg(test)]
@@ -73,7 +74,7 @@ mod tests {
             state: "DF".to_string(),
         };
 
-        let recv_addr = super::get_address("70150903").await;
+        let recv_addr = super::get_address("70150903").await.unwrap();
         assert_eq!(addr.city, recv_addr.city);
         assert_eq!(addr.state, recv_addr.state);
         assert_eq!(addr.neighborhood, recv_addr.neighborhood);

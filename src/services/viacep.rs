@@ -13,21 +13,21 @@ use hyper_tls::HttpsConnector;
 use serde::{Serialize, Deserialize};
 
 /// request function runs the API call to Viacep service
-pub async fn request(cep : &str) -> Result<Address, hyper::Error>{
+pub async fn request(cep : &str) -> Result<Address, Box<dyn std::error::Error>> {
     // This is where we will setup our HTTP client requests.
     // Still inside `async fn main`...
     let https = HttpsConnector::new();
     let client = Client::builder().build::<_, hyper::Body>(https);
 
     // Parse an `http::Uri`...
-    let uri =  format!("https://viacep.com.br/ws/{}/json/",cep).parse().unwrap();
+    let uri =  format!("https://viacep.com.br/ws/{}/json/",cep).parse()?;
 
     // Await the response...
     let resp = client.get(uri).await?;
     
     let data = hyper::body::to_bytes(resp).await?;
 
-    let address = serde_json::from_slice::<Address>(&data).unwrap();
+    let address = serde_json::from_slice::<Address>(&data)?;
 
     return Ok(address)
 }
