@@ -7,23 +7,31 @@ extern crate hyper_tls;
 extern crate serde;
 extern crate serde_xml_rs;
 
+use crate::LagoinhaError;
+
 use bytes::buf::BufExt;
 use hyper::Client;
 use hyper_tls::HttpsConnector;
 use std::str::FromStr;
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize,};
 
 /// request function runs the API call to correios service
-pub async fn request(cep: &str) -> Result<Address, Box<dyn std::error::Error>>  {
+pub async fn request(cep: &str) -> Result<Address, LagoinhaError>  {
     // This is where we will setup our HTTP client requests.
     // Still inside `async fn main`...
     let https = HttpsConnector::new();
     let client = Client::builder().build::<_, hyper::Body>(https);
     // Parse an `http::Uri`...
-    let uri : hyper::Uri = hyper::Uri::from_str(
+    let uri = hyper::Uri::from_str(
         "https://apps.correios.com.br/SigepMasterJPA/AtendeClienteService/AtendeCliente?wsdl",
-    )?;
+    );
+
+
+    let uri = match uri {
+        Ok(uri) => uri,
+        Err(_) => return Err(LagoinhaError::UnexpectedLibraryError),
+    };
     
     let payload = format!(
         r#"
@@ -43,13 +51,49 @@ pub async fn request(cep: &str) -> Result<Address, Box<dyn std::error::Error>>  
         .header("content-type", "application/soap+xml;charset=utf-8")
         .header("cache-control", "no-cache")
         .uri(uri)
-        .body(hyper::Body::from(payload))?;
+        .body(hyper::Body::from(payload));
+    let request = match request {
+        Ok(request) => {request},
+        Err(_) => {
+            return Err(LagoinhaError::UnexpectedLibraryError)
+        },
+    };
 
-    let resp = client.request(request).await?;
-    let data = hyper::body::to_bytes(resp).await?;
+    let resp = client.request(request).await;
+    let resp = match resp {
+        Err(_) => return Err(crate::LagoinhaError::UnexpectedLibraryError),
+        Ok(resp) => {
+            let code = resp.status().as_u16();
+            match code {
+                200..=299 => {resp},
+                400..=499 => {return Err(crate::LagoinhaError::ClientError{code});},
+                500..=599 => {return Err(crate::LagoinhaError::ServerError{code});},
+                _ => { return Err(crate::LagoinhaError::UnknownServerError{code});},
+            }
+        },
+    };
 
-    let correios_data: BodyTag = serde_xml_rs::from_reader(data.reader())?;
-    return Ok(correios_data.body_tag.consult_tag.return_tag);
+    let data = hyper::body::to_bytes(resp).await;
+    let data = match data {
+        Ok(data) => {data},
+        Err(_) => {return Err(crate::LagoinhaError::MissingBodyError);},
+    };
+    // let datab = data.clone();
+    
+    // println!("{}", std::str::from_utf8(&data).unwrap());
+
+    let correios_data: Result<BodyTag, serde_xml_rs::Error> = serde_xml_rs::from_reader(data.clone().reader()); // this clone prevents value droping to produce str_body error
+    match correios_data {
+        Ok(correios_data) => {return Ok(correios_data.body_tag.consult_tag.return_tag);},
+        Err(e) => {
+            let str_body = std::str::from_utf8(&data);
+            let str_body = match str_body {
+                Ok(str_body) => {str_body},
+                Err(_) => { "Failed to produce string body "}//+  e.to_string().as_str()},
+            };
+            return Err(crate::LagoinhaError::BodyParsingError{error: e.to_string(), body: str_body.to_string()});
+        },
+    };
 }
 
 // these structs are used to define the entire path to the XML. There must be a better way to do this...

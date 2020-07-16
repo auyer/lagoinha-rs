@@ -7,29 +7,58 @@ extern crate hyper_tls;
 extern crate serde_json;
 extern crate serde;
 
+use crate::LagoinhaError;
+
 use hyper::Client;
 use hyper_tls::HttpsConnector;
-
 use serde::{Serialize, Deserialize};
 
 /// request function runs the API call to Viacep service
-pub async fn request(cep : &str) -> Result<Address, Box<dyn std::error::Error>> {
+pub async fn request(cep : &str) -> Result<Address, LagoinhaError> {
     // This is where we will setup our HTTP client requests.
     // Still inside `async fn main`...
     let https = HttpsConnector::new();
     let client = Client::builder().build::<_, hyper::Body>(https);
 
     // Parse an `http::Uri`...
-    let uri =  format!("https://viacep.com.br/ws/{}/json/",cep).parse()?;
+    let uri =  format!("https://viacep.com.br/ws/{}/json/",cep).parse::<hyper::Uri>();
 
+    let uri = match uri {
+        Ok(uri) => uri,
+        Err(_) => return Err(LagoinhaError::UnexpectedLibraryError),
+    };
     // Await the response...
-    let resp = client.get(uri).await?;
-    
-    let data = hyper::body::to_bytes(resp).await?;
+    let resp = client.get(uri).await;
+    let resp = match resp {
+        Err(_) => return Err(LagoinhaError::UnexpectedLibraryError),
+        Ok(resp) => {
+            let code = resp.status().as_u16();
+            match code {
+                200..=299 => {resp},
+                400..=499 => {return Err(LagoinhaError::ClientError{code});},
+                500..=599 => {return Err(LagoinhaError::ServerError{code});},
+                _ => { return Err(LagoinhaError::UnknownServerError{code});},
+            }
+        },
+    };
+    let data = hyper::body::to_bytes(resp).await;
+    let data = match data {
+        Ok(data) => {data},
+        Err(_) => {return Err(LagoinhaError::MissingBodyError);},
+    };
 
-    let address = serde_json::from_slice::<Address>(&data)?;
-
-    return Ok(address)
+    let address = serde_json::from_slice::<Address>(&data);
+    match address {
+        Ok(address) => {return Ok(address)},
+        Err(e) => {
+            let str_body = std::str::from_utf8(&data);
+            let str_body = match str_body {
+                Ok(str_body) => {str_body},
+                Err(_) => { "Failed to produce string body "}//+  e.to_string().as_str()},
+            };
+            return Err(LagoinhaError::BodyParsingError{error: e.to_string(), body: str_body.to_string()});
+        },
+    };
 }
 
 /// Address struct used to deserialize the results from the viacep API
@@ -82,5 +111,14 @@ mod tests {
         assert_eq!(addr.unidade, resaddr.unidade);
         assert_eq!(addr.ibge, resaddr.ibge);
         assert_eq!(addr.gia, resaddr.gia);
+    }
+
+    #[tokio::test]
+    async fn invalid_viacep() {
+        let resaddr = super::request("123").await.unwrap_err();
+        // assert!(Err(resaddr));
+        // let err = *resaddr;
+        println!("{}", resaddr);
+        // assert!(resaddr.is_err());
     }
 }

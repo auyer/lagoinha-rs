@@ -17,7 +17,7 @@
 //!
 //!#[tokio::main]
 //!async fn main() {    
-//!    let addr = lagoinha::get_address("CEP_GOES_HERE").await;
+//!    let addr = lagoinha::get_address("70150903").await.unwrap();
 //!    println!("{:#?}", addr);
 //!}
 //!```
@@ -26,7 +26,6 @@
 pub mod services;
 use services::Address;
 
-use std::error::Error;
 use futures::channel::mpsc;
 use futures::{
     future::FutureExt,
@@ -45,7 +44,7 @@ async fn correios_requet(cep : &str, mut  tx: mpsc::Sender<Address>){
     return tx.send(services::correios::request(cep).await.unwrap().to_address()).await.unwrap()
 }
 
-pub async fn get_address(cep: &str) -> Result<Address, Box<dyn std::error::Error>> {
+pub async fn get_address(cep: &str) -> Result<Address, LagoinhaError> {
     let (tx, mut rx) = mpsc::channel::<services::Address>(1);
 
     futures::select!{
@@ -80,5 +79,43 @@ mod tests {
         assert_eq!(addr.neighborhood, recv_addr.neighborhood);
         // the other fields, like cep can come with different formating
     }
+
+}
+
+
+use std::error::Error;
+use std::fmt;
+
+#[derive(Debug)]
+pub enum LagoinhaError{
+    /// UnknownServerError represents unmapped server errors
+    UnknownServerError { code: u16 },
+    ServerError{ code: u16 },
+    ClientError{ code: u16 },
+    BodyParsingError{ error: String, body: String },
+    MissingBodyError,
+    InputError,
+    UnexpectedLibraryError,
+}
+
+impl fmt::Display for LagoinhaError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &self {
+            LagoinhaError::UnknownServerError { code } => {
+                write!(f, "recieved an unknown error from server with code {}." , code)
+            },
+            LagoinhaError::ServerError { code } => write!(f, "Recieved a server error {}", code),
+            LagoinhaError::ClientError { code } => write!(f, "Recieved a client error {}", code),
+            LagoinhaError::BodyParsingError { error, body } => write!(f, "Failed to parse body with error {}. This should not happen, submit this body in a GitHub issue: {}", error, body),
+            LagoinhaError::MissingBodyError => write!(f, "Recieved a result without a body."),
+            LagoinhaError::InputError => {
+                write!(f, "The CEP is malformatted. It should be follow this templates: 12345-678 or 12345678")
+            },
+            LagoinhaError::UnexpectedLibraryError => write!(f,"Recieved an unexpected error from the library. Please send an issue in GitHub.")
+        }
+    }
+}
+
+impl Error for LagoinhaError {
 
 }
