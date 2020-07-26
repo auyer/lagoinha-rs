@@ -1,63 +1,101 @@
 //! Viacep service: https://viacep.com.br/
-//! 
+//!
 //! the call to this service uses Hyper as its HTTP library
 
 extern crate hyper;
 extern crate hyper_tls;
-extern crate serde_json;
 extern crate serde;
+extern crate serde_json;
 
-use crate::LagoinhaError;
+use crate::error::Error;
+use crate::error::Kind;
+use crate::error::Source::Viacep;
 
 use hyper::Client;
 use hyper_tls::HttpsConnector;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// request function runs the API call to Viacep service
-pub async fn request(cep : &str) -> Result<Address, LagoinhaError> {
+pub async fn request(cep: &str) -> Result<Address, Error> {
     // This is where we will setup our HTTP client requests.
     // Still inside `async fn main`...
     let https = HttpsConnector::new();
     let client = Client::builder().build::<_, hyper::Body>(https);
 
     // Parse an `http::Uri`...
-    let uri =  format!("https://viacep.com.br/ws/{}/json/",cep).parse::<hyper::Uri>();
+    let uri = format!("https://viacep.com.br/ws/{}/json/", cep).parse::<hyper::Uri>();
 
     let uri = match uri {
         Ok(uri) => uri,
-        Err(_) => return Err(LagoinhaError::UnexpectedLibraryError),
+        Err(_) => {
+            return Err(Error {
+                kind: Kind::UnexpectedLibraryError,
+                source: Viacep,
+            })
+        }
     };
     // Await the response...
     let resp = client.get(uri).await;
     let resp = match resp {
-        Err(_) => return Err(LagoinhaError::UnexpectedLibraryError),
+        Err(_) => {
+            return Err(Error {
+                kind: Kind::UnexpectedLibraryError,
+                source: Viacep,
+            })
+        }
         Ok(resp) => {
             let code = resp.status().as_u16();
             match code {
-                200..=299 => {resp},
-                400..=499 => {return Err(LagoinhaError::ClientError{code});},
-                500..=599 => {return Err(LagoinhaError::ServerError{code});},
-                _ => { return Err(LagoinhaError::UnknownServerError{code});},
+                200..=299 => resp,
+                400..=499 => {
+                    return Err(Error {
+                        kind: Kind::ClientError { code: code as u16 },
+                        source: Viacep,
+                    });
+                }
+                500..=599 => {
+                    return Err(Error {
+                        kind: Kind::ServerError { code: code as u16 },
+                        source: Viacep,
+                    });
+                }
+                _ => {
+                    return Err(Error {
+                        kind: Kind::UnknownServerError { code: code as u16 },
+                        source: Viacep,
+                    });
+                }
             }
-        },
+        }
     };
     let data = hyper::body::to_bytes(resp).await;
     let data = match data {
-        Ok(data) => {data},
-        Err(_) => {return Err(LagoinhaError::MissingBodyError);},
+        Ok(data) => data,
+        Err(_) => {
+            return Err(Error {
+                kind: Kind::MissingBodyError,
+                source: Viacep,
+            });
+        }
     };
 
     let address = serde_json::from_slice::<Address>(&data);
     match address {
-        Ok(address) => {return Ok(address)},
+        Ok(address) => return Ok(address),
         Err(e) => {
             let str_body = std::str::from_utf8(&data);
             let str_body = match str_body {
-                Ok(str_body) => {str_body},
-                Err(_) => { "Failed to produce string body "}//+  e.to_string().as_str()},
+                Ok(str_body) => str_body,
+                Err(_) => "Failed to produce string body ", //+  e.to_string().as_str()},
             };
-            return Err(LagoinhaError::BodyParsingError{error: e.to_string(), body: str_body.to_string()});
-        },
+            return Err(Error {
+                kind: Kind::BodyParsingError {
+                    error: e.to_string(),
+                    body: str_body.to_string(),
+                },
+                source: Viacep,
+            });
+        }
     };
 }
 
@@ -89,7 +127,7 @@ mod tests {
     #[tokio::test]
     async fn valid_viacep() {
         let resaddr = super::request("70150903").await.unwrap();
-        
+
         let addr = super::Address {
             cep: "70150-903".to_string(),
             address: "SPP".to_string(),

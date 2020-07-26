@@ -65,7 +65,7 @@ cargo run --example standalone_services 20940040
 - [x] CepLá service
 - [ ] Separate Two languages in README.md
 - [ ] Documentation
-- [ ] Invest in better error handling
+- [x] Invest in better error handling
 - [ ] Unhappy path testing
 - [ ] Validate input
 - [ ] Different compilation features

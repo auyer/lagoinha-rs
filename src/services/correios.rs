@@ -1,5 +1,5 @@
 //! Correios service: http://www.buscacep.correios.com.br/sistemas/buscacep/BuscaCepEndereco.cfm
-//! 
+//!
 //! the call to this service uses Hyper as its HTTP library
 
 extern crate hyper;
@@ -7,17 +7,19 @@ extern crate hyper_tls;
 extern crate serde;
 extern crate serde_xml_rs;
 
-use crate::LagoinhaError;
+use crate::error::Error;
+use crate::error::Kind;
+use crate::error::Source::Correios;
 
 use bytes::buf::BufExt;
 use hyper::Client;
 use hyper_tls::HttpsConnector;
 use std::str::FromStr;
 
-use serde::{Deserialize, Serialize,};
+use serde::{Deserialize, Serialize};
 
 /// request function runs the API call to correios service
-pub async fn request(cep: &str) -> Result<Address, LagoinhaError>  {
+pub async fn request(cep: &str) -> Result<Address, Error> {
     // This is where we will setup our HTTP client requests.
     // Still inside `async fn main`...
     let https = HttpsConnector::new();
@@ -27,12 +29,16 @@ pub async fn request(cep: &str) -> Result<Address, LagoinhaError>  {
         "https://apps.correios.com.br/SigepMasterJPA/AtendeClienteService/AtendeCliente?wsdl",
     );
 
-
     let uri = match uri {
         Ok(uri) => uri,
-        Err(_) => return Err(LagoinhaError::UnexpectedLibraryError),
+        Err(_) => {
+            return Err(Error {
+                kind: Kind::UnexpectedLibraryError,
+                source: Correios,
+            })
+        }
     };
-    
+
     let payload = format!(
         r#"
     <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:cli="http://cliente.bean.master.sigep.bsb.correios.com.br/">
@@ -53,46 +59,83 @@ pub async fn request(cep: &str) -> Result<Address, LagoinhaError>  {
         .uri(uri)
         .body(hyper::Body::from(payload));
     let request = match request {
-        Ok(request) => {request},
+        Ok(request) => request,
         Err(_) => {
-            return Err(LagoinhaError::UnexpectedLibraryError)
-        },
+            return Err(Error {
+                kind: Kind::UnexpectedLibraryError,
+                source: Correios,
+            })
+        }
     };
 
     let resp = client.request(request).await;
     let resp = match resp {
-        Err(_) => return Err(crate::LagoinhaError::UnexpectedLibraryError),
+        Err(_) => {
+            return Err(Error {
+                kind: Kind::UnexpectedLibraryError,
+                source: Correios,
+            })
+        }
         Ok(resp) => {
             let code = resp.status().as_u16();
             match code {
-                200..=299 => {resp},
-                400..=499 => {return Err(crate::LagoinhaError::ClientError{code});},
-                500..=599 => {return Err(crate::LagoinhaError::ServerError{code});},
-                _ => { return Err(crate::LagoinhaError::UnknownServerError{code});},
+                200..=299 => resp,
+                400..=499 => {
+                    return Err(Error {
+                        kind: Kind::ClientError { code: code as u16 },
+                        source: Correios,
+                    });
+                }
+                500..=599 => {
+                    return Err(Error {
+                        kind: Kind::ServerError { code: code as u16 },
+                        source: Correios,
+                    });
+                }
+                _ => {
+                    return Err(Error {
+                        kind: Kind::UnknownServerError { code: code as u16 },
+                        source: Correios,
+                    });
+                }
             }
-        },
+        }
     };
 
     let data = hyper::body::to_bytes(resp).await;
     let data = match data {
-        Ok(data) => {data},
-        Err(_) => {return Err(crate::LagoinhaError::MissingBodyError);},
+        Ok(data) => data,
+        Err(_) => {
+            return Err(Error {
+                kind: Kind::MissingBodyError,
+                source: Correios,
+            });
+        }
     };
     // let datab = data.clone();
-    
+
     // println!("{}", std::str::from_utf8(&data).unwrap());
 
-    let correios_data: Result<BodyTag, serde_xml_rs::Error> = serde_xml_rs::from_reader(data.clone().reader()); // this clone prevents value droping to produce str_body error
+    let correios_data: Result<BodyTag, serde_xml_rs::Error> =
+        serde_xml_rs::from_reader(data.clone().reader()); // this clone prevents value droping to produce str_body error
     match correios_data {
-        Ok(correios_data) => {return Ok(correios_data.body_tag.consult_tag.return_tag);},
+        Ok(correios_data) => {
+            return Ok(correios_data.body_tag.consult_tag.return_tag);
+        }
         Err(e) => {
             let str_body = std::str::from_utf8(&data);
             let str_body = match str_body {
-                Ok(str_body) => {str_body},
-                Err(_) => { "Failed to produce string body "}//+  e.to_string().as_str()},
+                Ok(str_body) => str_body,
+                Err(_) => "Failed to produce string body ", //+  e.to_string().as_str()},
             };
-            return Err(crate::LagoinhaError::BodyParsingError{error: e.to_string(), body: str_body.to_string()});
-        },
+            return Err(Error {
+                kind: Kind::BodyParsingError {
+                    error: e.to_string(),
+                    body: str_body.to_string(),
+                },
+                source: Correios,
+            });
+        }
     };
 }
 
@@ -130,7 +173,6 @@ pub struct Address {
     #[serde(rename = "end", default = "String::new")]
     pub address: String,
 }
-
 
 #[cfg(test)]
 mod tests {

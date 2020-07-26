@@ -1,9 +1,9 @@
-pub mod viacep;
 pub mod cepla;
 pub mod correios;
+pub mod viacep;
 
 extern crate serde;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Address struct is the unified response for this package. All other services have a conversion function to it.
 #[derive(Deserialize, Serialize, Debug)]
@@ -16,17 +16,16 @@ pub struct Address {
     pub city: String,
 }
 
-
 impl viacep::Address {
     /// to_address implementtion converts services::viacep::Address to services::Address
-    pub fn to_address(&self) -> Address{
+    pub fn to_address(&self) -> Address {
         let addr = Address {
             cep: self.cep.clone(),
             address: self.address.clone(),
             details: self.details.clone(),
             neighborhood: self.neighborhood.clone(),
             state: self.state.clone(),
-            city: self.city.clone(),  
+            city: self.city.clone(),
         };
         addr
     }
@@ -34,14 +33,14 @@ impl viacep::Address {
 
 impl correios::Address {
     /// to_address implementtion converts services::correios::Address to services::Address
-    pub fn to_address(&self) -> Address{
+    pub fn to_address(&self) -> Address {
         let addr = Address {
             cep: self.cep.clone(),
             address: self.address.clone(),
             details: "".to_string(),
             neighborhood: self.neighborhood.clone(),
             state: self.state.clone(),
-            city: self.city.clone(),  
+            city: self.city.clone(),
         };
         addr
     }
@@ -49,14 +48,14 @@ impl correios::Address {
 
 impl cepla::Address {
     /// to_address implementtion converts services::cepla::Address to services::Address
-    pub fn to_address(&self) -> Address{
+    pub fn to_address(&self) -> Address {
         let addr = Address {
             cep: self.cep.clone(),
             address: self.address.clone(),
             details: self.details.clone(),
             neighborhood: self.neighborhood.clone(),
             state: self.state.clone(),
-            city: self.city.clone(),  
+            city: self.city.clone(),
         };
         addr
     }
@@ -64,17 +63,17 @@ impl cepla::Address {
 
 #[cfg(test)]
 mod tests {
-    use super::viacep;
-    use super::correios;
     use super::cepla;
+    use super::correios;
+    use super::viacep;
 
     #[tokio::test]
     async fn viacep_conversion() {
-
         let viac_addr = viacep::Address {
             cep: "70150-903".to_string(),
             address: "SPP".to_string(),
-            details: "Palácio da Alvorada (Residência Oficial do Presidente da República)".to_string(),
+            details: "Palácio da Alvorada (Residência Oficial do Presidente da República)"
+                .to_string(),
             neighborhood: "Zona Cívico-Administrativa".to_string(),
             city: "Brasília".to_string(),
             state: "DF".to_string(),
@@ -83,14 +82,15 @@ mod tests {
             gia: "".to_string(),
         };
         let viac_addr = viac_addr.to_address();
-        
+
         let addr = super::Address {
             cep: "70150-903".to_string(),
             state: "DF".to_string(),
             city: "Brasília".to_string(),
             neighborhood: "Zona Cívico-Administrativa".to_string(),
             address: "SPP".to_string(),
-            details: "Palácio da Alvorada (Residência Oficial do Presidente da República)".to_string(),
+            details: "Palácio da Alvorada (Residência Oficial do Presidente da República)"
+                .to_string(),
         };
 
         assert_eq!(addr.address, viac_addr.address);
@@ -103,7 +103,6 @@ mod tests {
 
     #[tokio::test]
     async fn correios_conversion() {
-
         let corr_addr = correios::Address {
             cep: "70150903".to_string(),
             state: "DF".to_string(),
@@ -119,7 +118,8 @@ mod tests {
             city: "Brasília".to_string(),
             neighborhood: "Zona Cívico-Administrativa".to_string(),
             address: "SPP".to_string(),
-            details: "Palácio da Alvorada (Residência Oficial do Presidente da República)".to_string(),
+            details: "Palácio da Alvorada (Residência Oficial do Presidente da República)"
+                .to_string(),
         };
 
         assert_eq!(addr.address, corr_addr.address);
@@ -131,24 +131,25 @@ mod tests {
 
     #[tokio::test]
     async fn cepla_conversion() {
-
         let cepl_addr = cepla::Address {
             cep: "70150903".to_string(),
             state: "DF".to_string(),
             city: "Brasília".to_string(),
             neighborhood: "Zona Cívico-Administrativa".to_string(),
             address: "SPP".to_string(),
-            details: "Palácio da Alvorada (Residência Oficial do Presidente da República)".to_string(),
+            details: "Palácio da Alvorada (Residência Oficial do Presidente da República)"
+                .to_string(),
         };
         let cepl_addr = cepl_addr.to_address();
-        
+
         let addr = super::Address {
             cep: "70150903".to_string(),
             state: "DF".to_string(),
             city: "Brasília".to_string(),
             neighborhood: "Zona Cívico-Administrativa".to_string(),
             address: "SPP".to_string(),
-            details: "Palácio da Alvorada (Residência Oficial do Presidente da República)".to_string(),
+            details: "Palácio da Alvorada (Residência Oficial do Presidente da República)"
+                .to_string(),
         };
 
         assert_eq!(addr.address, cepl_addr.address);
