@@ -3,6 +3,18 @@ name = "lagoinha"
 version = "0.1.0"
 authors = ["Auyer <rafael@rcpassos.me>"]
 edition = "2018"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/auyer/lagoinha-rs"
+documentation = "https://docs.rs/lagoinha-rs"
+homepage = "https://github.com/auyer/lagoinha-rs"
+description = """
+Lagoinha is a package that uses public APIs to fetch addresses using the Brazilian Postal Code (CEP). This package cuncurrenlty calls all the supported APIs and returns the first result.
+"""
+categories = ["api-bindings", "asynchronous", "network-programming", "web-programming::http-client"]
+exclude = [
+  ".github"
+]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
