@@ -7,39 +7,39 @@
 
 ---
 
-
 <p align="center">
   <!-- <img src="assets/logo.png" width="100px" /> -->
   <h3 align="center">
     Lagoinha-rs
   </h3>
   <p align="center">
-    Rust library that returns addresses from the Brazilian Postal Code (CEP) <br/>
-    using the following APIs: Correios, ViaCEP, Cepla
+    Lib Rust que retorna um endereço a partir do CEP <br/>
+    utilizando as APIs públicas : Correios, ViaCEP, Ceplá
   </p>
   <p align="center">
-    Readme in <a href="README-pt.md">Português</a>
+    Readme in <a href="README.md">English</a>
   </p>
 </p>
 
----
-Lagoinha is a package that uses public APIs to fetch addresses using the Brazilian Postal Code (CEP). This package cuncurrenlty calls all the supported APIs and returns the first result.
+--- 
+Lagoinha é basicamente um pacote que usa as APIs públicas para pegar o endereço com base em um CEP. O que o pacote faz, é disparar pra todas as APIs ao mesmo tempo e retornar com o resultado da primeira API que responder.
 
-### Diagram:
+### Diagrama de funcionamento
 
 ![lagoinha call fluxogram](.github/assets/lagoinha-calls.png)
 
-### Why this name ?
+### Por que esse nome
 
-It means "little pond". It is a Brazillian meme ! Check the video[vídeo](https://www.youtube.com/watch?v=C1Sd_RWF5ks)!
+É simples, veja o [vídeo](https://www.youtube.com/watch?v=C1Sd_RWF5ks)!
+(onde é que eu tô, lagoinha, CEP, endereço...)
 
-### Instalation
+### Instalação
 
 ```toml
 lagoinha-rs = "0.1"
 ```
 
-### How to use it
+### Como usar
 
 ```rust
 extern crate lagoinha;
