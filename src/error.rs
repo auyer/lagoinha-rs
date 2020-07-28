@@ -1,7 +1,6 @@
 use std::error::Error as StdError;
 use std::fmt;
-
-#[derive(Debug)]
+#[derive(PartialEq, Debug)]
 pub enum Source {
     Viacep,
     Correios,
@@ -20,13 +19,13 @@ impl fmt::Display for Source {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Error {
     pub source: Source,
     pub kind: Kind,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Kind {
     /// UnknownServerError represents unmapped server errors
     UnknownServerError {

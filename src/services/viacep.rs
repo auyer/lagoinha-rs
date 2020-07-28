@@ -151,12 +151,23 @@ mod tests {
         assert_eq!(addr.gia, resaddr.gia);
     }
 
+    use crate::error::Error;
+    use crate::error::Kind;
+    use crate::error::Source;
     #[tokio::test]
-    async fn invalid_viacep() {
-        let resaddr = super::request("123").await.unwrap_err();
-        // assert!(Err(resaddr));
-        // let err = *resaddr;
-        println!("{}", resaddr);
-        // assert!(resaddr.is_err());
+    async fn invalid_input_viacep() {
+        let resaddr = super::request("123").await;
+        assert!(resaddr.is_err());
+        resaddr
+            .map_err(|err| {
+                assert_eq!(
+                    err,
+                    Error {
+                        source: Source::Viacep,
+                        kind: Kind::ClientError { code: 400 }
+                    }
+                )
+            })
+            .ok();
     }
 }

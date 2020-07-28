@@ -194,4 +194,24 @@ mod tests {
         assert_eq!(addr.neighborhood, resaddr.neighborhood);
         assert_eq!(addr.address, resaddr.address);
     }
+
+    use crate::error::Error;
+    use crate::error::Kind;
+    use crate::error::Source;
+    #[tokio::test]
+    async fn invalid_input_correios() {
+        let resaddr = super::request("123").await;
+        assert!(resaddr.is_err());
+        resaddr
+            .map_err(|err| {
+                assert_eq!(
+                    err,
+                    Error {
+                        source: Source::Correios,
+                        kind: Kind::ServerError { code: 500 }
+                    }
+                )
+            })
+            .ok();
+    }
 }

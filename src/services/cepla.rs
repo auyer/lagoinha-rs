@@ -143,4 +143,34 @@ mod tests {
         assert_eq!(addr.cep, resaddr.cep);
         assert_eq!(addr.details, resaddr.details);
     }
+
+    use crate::error::Error;
+    use crate::error::Kind;
+    use crate::error::Source;
+    #[tokio::test]
+    async fn invalid_input_viacep() {
+        let resaddr = super::request("123").await;
+        assert!(resaddr.is_err());
+        resaddr
+            .map_err(|err| {
+                assert_eq!(
+                    std::mem::discriminant(&err),
+                    std::mem::discriminant(&Error {
+                        source: Source::Cepla,
+                        kind: Kind::BodyParsingError {
+                            error: "".to_owned(),
+                            body: "".to_owned(),
+                        }
+                    })
+                );
+                assert_eq!(
+                    std::mem::discriminant(&err.kind),
+                    std::mem::discriminant(&Kind::BodyParsingError {
+                        error: "".to_owned(),
+                        body: "".to_owned(),
+                    })
+                );
+            })
+            .ok();
+    }
 }
