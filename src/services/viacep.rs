@@ -151,6 +151,33 @@ mod tests {
         assert_eq!(addr.gia, resaddr.gia);
     }
 
+    #[tokio::test]
+    async fn valid_viacep_with_dash() {
+        let resaddr = super::request("70150-903").await.unwrap();
+
+        let addr = super::Address {
+            cep: "70150-903".to_string(),
+            address: "SPP".to_string(),
+            details: "".to_string(),
+            neighborhood: "Zona Cívico-Administrativa".to_string(),
+            city: "Brasília".to_string(),
+            state: "DF".to_string(),
+            unidade: "".to_string(),
+            ibge: "5300108".to_string(),
+            gia: "".to_string(),
+        };
+
+        assert_eq!(addr.cep, resaddr.cep);
+        assert_eq!(addr.address, resaddr.address);
+        assert_eq!(addr.details, resaddr.details);
+        assert_eq!(addr.neighborhood, resaddr.neighborhood);
+        assert_eq!(addr.city, resaddr.city);
+        assert_eq!(addr.state, resaddr.state);
+        assert_eq!(addr.unidade, resaddr.unidade);
+        assert_eq!(addr.ibge, resaddr.ibge);
+        assert_eq!(addr.gia, resaddr.gia);
+    }
+
     use crate::error::Error;
     use crate::error::Kind;
     use crate::error::Source;

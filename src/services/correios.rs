@@ -195,6 +195,25 @@ mod tests {
         assert_eq!(addr.address, resaddr.address);
     }
 
+    #[tokio::test]
+    async fn valid_correios_with_dash() {
+        let resaddr = super::request("70150-903").await.unwrap();
+
+        let addr = super::Address {
+            cep: "70150903".to_string(),
+            state: "DF".to_string(),
+            city: "Brasília".to_string(),
+            neighborhood: "Zona Cívico-Administrativa".to_string(),
+            address: "SPP".to_string(),
+        };
+
+        assert_eq!(addr.cep, resaddr.cep);
+        assert_eq!(addr.state, resaddr.state);
+        assert_eq!(addr.city, resaddr.city);
+        assert_eq!(addr.neighborhood, resaddr.neighborhood);
+        assert_eq!(addr.address, resaddr.address);
+    }
+
     use crate::error::Error;
     use crate::error::Kind;
     use crate::error::Source;

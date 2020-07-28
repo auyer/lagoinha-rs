@@ -1,6 +1,7 @@
 use std::error::Error as StdError;
 use std::fmt;
 #[derive(PartialEq, Debug)]
+/// Source represents from what component the error came (core lib, or the respective services)
 pub enum Source {
     Viacep,
     Correios,
@@ -21,33 +22,29 @@ impl fmt::Display for Source {
 
 #[derive(Debug, PartialEq)]
 pub struct Error {
+    /// Source represents from what component the error came (core lib, or the respective services)
     pub source: Source,
+    /// Kind indicates the error type
     pub kind: Kind,
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Kind {
-    /// UnknownServerError represents unmapped server errors
-    UnknownServerError {
-        code: u16,
-    },
-    ServerError {
-        code: u16,
-    },
-    ClientError {
-        code: u16,
-    },
-    BodyParsingError {
-        error: String,
-        body: String,
-    },
-    AllServicesRetunedErrors {
-        e1: String,
-        e2: String,
-        e3: String,
-    },
+    /// UnknownServerError represents unmapped server errors, with the recieved code
+    UnknownServerError { code: u16 },
+    /// ServerError represents status codes int the 5xx range
+    ServerError { code: u16 },
+    /// ServerError represents status codes int the 4xx range
+    ClientError { code: u16 },
+    /// BodyParsingError represents an error where the recieved body does not match with the expected schema
+    BodyParsingError { error: String, body: String },
+    /// AllServicesRetunedErrors indicates that each one of the called services returned an error
+    AllServicesRetunedErrors { e1: String, e2: String, e3: String },
+    /// MissingBodyError indicates that the respose had a missing body
     MissingBodyError,
+    /// InputError is unused at the momment, but is intended to represent an error with the input
     InputError,
+    /// UnexpectedLibraryError represents an unkown error in the library code
     UnexpectedLibraryError,
 }
 

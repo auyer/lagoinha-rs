@@ -144,7 +144,28 @@ mod tests {
         assert_eq!(addr.details, resaddr.details);
     }
 
-    use crate::error::Error;
+    #[tokio::test]
+    async fn valid_cepla_with_dash() {
+        let resaddr = super::request("70150-903").await.unwrap();
+
+        let addr = super::Address {
+            cep: "70150903".to_string(),
+            state: "DF".to_string(),
+            city: "Brasília".to_string(),
+            neighborhood: "Zona Cívico-Administrativa".to_string(),
+            address: "SPP".to_string(),
+            details: "Palácio da Alvorada (Residência Oficial do Presidente da República)"
+                .to_string(),
+        };
+
+        assert_eq!(addr.address, resaddr.address);
+        assert_eq!(addr.state, resaddr.state);
+        assert_eq!(addr.neighborhood, resaddr.neighborhood);
+        assert_eq!(addr.city, resaddr.city);
+        assert_eq!(addr.cep, resaddr.cep);
+        assert_eq!(addr.details, resaddr.details);
+    }
+
     use crate::error::Kind;
     use crate::error::Source;
     #[tokio::test]
@@ -153,16 +174,7 @@ mod tests {
         assert!(resaddr.is_err());
         resaddr
             .map_err(|err| {
-                assert_eq!(
-                    std::mem::discriminant(&err),
-                    std::mem::discriminant(&Error {
-                        source: Source::Cepla,
-                        kind: Kind::BodyParsingError {
-                            error: "".to_owned(),
-                            body: "".to_owned(),
-                        }
-                    })
-                );
+                assert_eq!(err.source, Source::Cepla);
                 assert_eq!(
                     std::mem::discriminant(&err.kind),
                     std::mem::discriminant(&Kind::BodyParsingError {
