@@ -24,6 +24,8 @@
 
 ---
 
+![CI](https://github.com/auyer/lagoinha-rs/workflows/CI/badge.svg)
+
 Lagoinha é basicamente um pacote que usa as APIs públicas para pegar o endereço com base em um CEP. O que o pacote faz, é disparar pra todas as APIs ao mesmo tempo e retornar com o resultado da primeira API que responder.
 
 ### Diagrama de funcionamento
