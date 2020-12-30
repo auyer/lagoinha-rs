@@ -97,9 +97,9 @@ pub struct Address {
 
 #[cfg(test)]
 mod tests {
-    #[tokio::test]
-    async fn valid_viacep() {
-        let resaddr = super::request("70150903").await.unwrap();
+    #[test]
+    fn valid_viacep() {
+        let resaddr = async_std::task::block_on(super::request("70150903")).unwrap();
 
         let addr = super::Address {
             cep: "70150-903".to_string(),
@@ -124,9 +124,9 @@ mod tests {
         assert_eq!(addr.gia, resaddr.gia);
     }
 
-    #[tokio::test]
-    async fn valid_viacep_with_dash() {
-        let resaddr = super::request("70150-903").await.unwrap();
+    #[test]
+    fn valid_viacep_with_dash() {
+        let resaddr = async_std::task::block_on(super::request("70150-903")).unwrap();
 
         let addr = super::Address {
             cep: "70150-903".to_string(),
@@ -154,9 +154,9 @@ mod tests {
     use crate::error::Error;
     use crate::error::Kind;
     use crate::error::Source;
-    #[tokio::test]
-    async fn invalid_input_viacep() {
-        let resaddr = super::request("123").await;
+    #[test]
+    fn invalid_input_viacep() {
+        let resaddr = async_std::task::block_on(super::request("123"));
         assert!(resaddr.is_err());
         resaddr
             .map_err(|err| {
