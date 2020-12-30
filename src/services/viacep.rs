@@ -1,92 +1,65 @@
 //! Viacep service: https://viacep.com.br/
-//!
-//! the call to this service uses Hyper as its HTTP library
-
-extern crate hyper;
-extern crate hyper_tls;
-extern crate serde;
-extern crate serde_json;
 
 use crate::error::Error;
 use crate::error::Kind;
 use crate::error::Source::Viacep;
 
-use hyper::Client;
-use hyper_tls::HttpsConnector;
 use serde::{Deserialize, Serialize};
+
+use isahc::{ReadResponseExt, Request, RequestExt};
 
 /// request function runs the API call to Viacep service
 pub async fn request(cep: &str) -> Result<Address, Error> {
-    // This is where we will setup our HTTP client requests.
-    // Still inside `async fn main`...
-    let https = HttpsConnector::new();
-    let client = Client::builder().build::<_, hyper::Body>(https);
+    let uri = format!("https://viacep.com.br/ws/{}/json/", cep);
+    let req = Request::get(uri)
+        .header("Accept", "application/json")
+        .body(())
+        .or(Err(Error {
+            kind: Kind::UnexpectedLibraryError,
+            source: Viacep,
+        }))?;
 
-    // Parse an `http::Uri`...
-    let uri = format!("https://viacep.com.br/ws/{}/json/", cep).parse::<hyper::Uri>();
+    let mut response = req.send().or(Err(Error {
+        kind: Kind::MissingBodyError,
+        source: Viacep,
+    }))?;
 
-    let uri = match uri {
-        Ok(uri) => uri,
-        Err(_) => {
+    match response.status().as_u16() {
+        200..=299 => (),
+        400..=499 => {
             return Err(Error {
-                kind: Kind::UnexpectedLibraryError,
-                source: Viacep,
-            })
-        }
-    };
-    // Await the response...
-    let resp = client.get(uri).await;
-    let resp = match resp {
-        Err(_) => {
-            return Err(Error {
-                kind: Kind::UnexpectedLibraryError,
-                source: Viacep,
-            })
-        }
-        Ok(resp) => {
-            let code = resp.status().as_u16();
-            match code {
-                200..=299 => resp,
-                400..=499 => {
-                    return Err(Error {
-                        kind: Kind::ClientError { code: code as u16 },
-                        source: Viacep,
-                    });
-                }
-                500..=599 => {
-                    return Err(Error {
-                        kind: Kind::ServerError { code: code as u16 },
-                        source: Viacep,
-                    });
-                }
-                _ => {
-                    return Err(Error {
-                        kind: Kind::UnknownServerError { code: code as u16 },
-                        source: Viacep,
-                    });
-                }
-            }
-        }
-    };
-    let data = hyper::body::to_bytes(resp).await;
-    let data = match data {
-        Ok(data) => data,
-        Err(_) => {
-            return Err(Error {
-                kind: Kind::MissingBodyError,
+                kind: Kind::ClientError {
+                    code: response.status().as_u16(),
+                },
                 source: Viacep,
             });
         }
-    };
-
-    let address = serde_json::from_slice::<Address>(&data);
+        500..=599 => {
+            return Err(Error {
+                kind: Kind::ServerError {
+                    code: response.status().as_u16(),
+                },
+                source: Viacep,
+            });
+        }
+        _ => {
+            return Err(Error {
+                kind: Kind::UnknownServerError {
+                    code: response.status().as_u16(),
+                },
+                source: Viacep,
+            });
+        }
+    }
+    let body = response.body_mut();
+    let address = serde_json::from_reader(body);
     match address {
         Ok(address) => return Ok(address),
         Err(e) => {
-            let str_body = std::str::from_utf8(&data);
+            let str_body = response.text();
             let str_body = match str_body {
                 Ok(str_body) => str_body,
-                Err(_) => "Failed to produce string body ", //+  e.to_string().as_str()},
+                Err(_) => "Failed to produce string body ".to_owned() + e.to_string().as_str(),
             };
             return Err(Error {
                 kind: Kind::BodyParsingError {
