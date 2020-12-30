@@ -67,8 +67,8 @@ mod tests {
     use super::correios;
     use super::viacep;
 
-    #[tokio::test]
-    async fn viacep_conversion() {
+    #[test]
+    fn viacep_conversion() {
         let viac_addr = viacep::Address {
             cep: "70150-903".to_string(),
             address: "SPP".to_string(),
@@ -101,8 +101,8 @@ mod tests {
         assert_eq!(addr.details, viac_addr.details);
     }
 
-    #[tokio::test]
-    async fn correios_conversion() {
+    #[test]
+    fn correios_conversion() {
         let corr_addr = correios::Address {
             cep: "70150903".to_string(),
             state: "DF".to_string(),
@@ -129,8 +129,8 @@ mod tests {
         assert_eq!(addr.cep, corr_addr.cep);
     }
 
-    #[tokio::test]
-    async fn cepla_conversion() {
+    #[test]
+    fn cepla_conversion() {
         let cepl_addr = cepla::Address {
             cep: "70150903".to_string(),
             state: "DF".to_string(),
