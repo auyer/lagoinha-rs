@@ -43,7 +43,19 @@ Lagoinha é basicamente um pacote que usa as APIs públicas para pegar o endere�
 lagoinha-rs = "0.1"
 ```
 
-### Como usar
+### How to use it
+```rust
+extern crate lagoinha;
+extern crate async_std;
+
+fn main() {
+    let addr = async_std::task::block_on(lagoinha::get_address("CEP_GOES_HERE"));
+    println!("{:#?}", addr);
+}
+```
+O primeiro método deve ser similar para qualquer *async runtime*.
+
+Ouem uma função Async (examplo usando Tokio):
 
 ```rust
 extern crate lagoinha;
@@ -64,9 +76,16 @@ To run them, use the commands below.
 ```bash
 # these examples can be run with a specific CEP (or leave blank for default value)
 cargo run --example get_address 20940040
+cargo run --example get_address_tokio 20940040
 cargo run --example standalone_services 20940040
 
 ```
+### Nota sobre o HTTP Client
+
+Essa lib usa [isahc](https://github.com/sagebind/isahc) com seu cliente http porquê:
+1) Ela funciona em qualquer runtime async,
+2) Ela oferece opção de configuração para Title-Case headers (necessário para CepLá)
+
 
 ---
 

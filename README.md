@@ -46,6 +46,18 @@ lagoinha-rs = "0.1"
 ```
 
 ### How to use it
+```rust
+extern crate lagoinha;
+extern crate async_std;
+
+fn main() {
+    let addr = async_std::task::block_on(lagoinha::get_address("CEP_GOES_HERE"));
+    println!("{:#?}", addr);
+}
+```
+The fisrt method should be similar for any async runtime.
+
+Or in a Async function (example using Tokio):
 
 ```rust
 extern crate lagoinha;
@@ -69,6 +81,13 @@ cargo run --example get_address 20940040
 cargo run --example standalone_services 20940040
 
 ```
+
+### Note on the HTTP Client
+
+This library uses [isahc](https://github.com/sagebind/isahc) as its http client because:
+1) It works in any async backend, and 
+2) It offers a configuration option for Title-Case headers (necessary for CepLá)
+
 
 ---
 

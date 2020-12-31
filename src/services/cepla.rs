@@ -3,94 +3,70 @@
 //! This service has an out os [spec](https://tools.ietf.org/html/rfc2616#section-4.2) header implementation,
 //! and does not comply with the [RFC2616](https://tools.ietf.org/html/rfc2616#section-4.2).
 //! This causes an issue when using it with libraries, like Hyper, because they parse all headers to lower case.
-//! To solve this issue, the Curl library was used.
-
-extern crate curl;
-extern crate serde;
-extern crate serde_json;
+//! To solve this issue, the title_case_headers(true) option was used.
 
 use crate::error::Error;
 use crate::error::Kind;
 use crate::error::Source::Cepla;
 
-use curl::easy::{Easy, List};
-
 use serde::{Deserialize, Serialize};
+
+use isahc::{config::Configurable, ReadResponseExt, Request, RequestExt};
 
 /// request function runs the API call to cepla service
 pub async fn request(cep: &str) -> Result<Address, Error> {
-    let mut requester = Easy::new();
     let uri = format!("http://cep.la/{}", cep);
-    requester.url(&uri).or(Err(Error {
-        kind: Kind::UnexpectedLibraryError,
-        source: Cepla,
-    }))?;
-
-    let mut list = List::new();
-    list.append("Accept: application/json").or(Err(Error {
-        kind: Kind::UnexpectedLibraryError,
-        source: Cepla,
-    }))?;
-
-    requester.http_headers(list).or(Err(Error {
-        kind: Kind::UnexpectedLibraryError,
-        source: Cepla,
-    }))?;
-    let mut buf = Vec::new();
-    {
-        let mut transfer = requester.transfer();
-        transfer
-            .write_function(|new_data| {
-                buf.extend_from_slice(new_data);
-                Ok(new_data.len())
-            })
-            .or(Err(Error {
-                kind: Kind::MissingBodyError,
-                source: Cepla,
-            }))?;
-        transfer.perform().or(Err(Error {
-            kind: Kind::MissingBodyError,
+    let req = Request::get(uri)
+        .title_case_headers(true)
+        .header("Accept", "application/json")
+        .body(())
+        .or(Err(Error {
+            kind: Kind::UnexpectedLibraryError,
             source: Cepla,
         }))?;
-    }
-    match requester.response_code() {
-        Ok(code) => match code {
-            200..=299 => (),
-            400..=499 => {
-                return Err(Error {
-                    kind: Kind::ClientError { code: code as u16 },
-                    source: Cepla,
-                });
-            }
-            500..=599 => {
-                return Err(Error {
-                    kind: Kind::ServerError { code: code as u16 },
-                    source: Cepla,
-                });
-            }
-            _ => {
-                return Err(Error {
-                    kind: Kind::UnknownServerError { code: code as u16 },
-                    source: Cepla,
-                });
-            }
-        },
-        Err(_) => {
+
+    let mut response = req.send().or(Err(Error {
+        kind: Kind::MissingBodyError,
+        source: Cepla,
+    }))?;
+
+    match response.status().as_u16() {
+        200..=299 => (),
+        400..=499 => {
             return Err(Error {
-                kind: Kind::UnexpectedLibraryError,
+                kind: Kind::ClientError {
+                    code: response.status().as_u16(),
+                },
+                source: Cepla,
+            });
+        }
+        500..=599 => {
+            return Err(Error {
+                kind: Kind::ServerError {
+                    code: response.status().as_u16(),
+                },
+                source: Cepla,
+            });
+        }
+        _ => {
+            return Err(Error {
+                kind: Kind::UnknownServerError {
+                    code: response.status().as_u16(),
+                },
                 source: Cepla,
             });
         }
     }
+    let body = response.body_mut();
 
-    let address = serde_json::from_slice::<Address>(&buf);
+    let address = serde_json::from_reader(body);
     match address {
         Ok(address) => return Ok(address),
         Err(e) => {
-            let str_body = std::str::from_utf8(&buf);
+            let str_body = response.text();
             let str_body = match str_body {
                 Ok(str_body) => str_body,
-                Err(_) => "Failed to produce string body ", //+  e.to_string().as_str()},
+                Err(e) => "Failed to produce string body ".to_owned() + e.to_string().as_str(),
             };
             return Err(Error {
                 kind: Kind::BodyParsingError {
@@ -122,9 +98,9 @@ pub struct Address {
 
 #[cfg(test)]
 mod tests {
-    #[tokio::test]
-    async fn valid_cepla() {
-        let resaddr = super::request("70150903").await.unwrap();
+    #[test]
+    fn valid_cepla() {
+        let resaddr = async_std::task::block_on(super::request("70150903")).unwrap();
 
         let addr = super::Address {
             cep: "70150903".to_string(),
@@ -144,9 +120,9 @@ mod tests {
         assert_eq!(addr.details, resaddr.details);
     }
 
-    #[tokio::test]
-    async fn valid_cepla_with_dash() {
-        let resaddr = super::request("70150-903").await.unwrap();
+    #[test]
+    fn valid_cepla_with_dash() {
+        let resaddr = async_std::task::block_on(super::request("70150-903")).unwrap();
 
         let addr = super::Address {
             cep: "70150903".to_string(),
@@ -168,9 +144,9 @@ mod tests {
 
     use crate::error::Kind;
     use crate::error::Source;
-    #[tokio::test]
-    async fn invalid_input_viacep() {
-        let resaddr = super::request("123").await;
+    #[test]
+    fn invalid_input_viacep() {
+        let resaddr = async_std::task::block_on(super::request("123"));
         assert!(resaddr.is_err());
         resaddr
             .map_err(|err| {

@@ -134,9 +134,8 @@ pub async fn get_address(cep: &str) -> Result<Address, Error> {
 
 #[cfg(test)]
 mod tests {
-
     #[tokio::test]
-    async fn test_channels() {
+    async fn test_channels_tokio() {
         let addr = super::services::Address {
             cep: "70150903".to_string(),
             address: "SPP".to_string(),
@@ -147,6 +146,24 @@ mod tests {
         };
 
         let recv_addr = super::get_address("70150903").await.unwrap();
+        assert_eq!(addr.city, recv_addr.city);
+        assert_eq!(addr.state, recv_addr.state);
+        assert_eq!(addr.neighborhood, recv_addr.neighborhood);
+        // the other fields, like cep can come with different formating
+    }
+
+    #[test]
+    fn test_channels_async_std() {
+        let addr = super::services::Address {
+            cep: "70150903".to_string(),
+            address: "SPP".to_string(),
+            details: "".to_string(),
+            neighborhood: "Zona Cívico-Administrativa".to_string(),
+            city: "Brasília".to_string(),
+            state: "DF".to_string(),
+        };
+
+        let recv_addr = async_std::task::block_on(super::get_address("70150903")).unwrap();
         assert_eq!(addr.city, recv_addr.city);
         assert_eq!(addr.state, recv_addr.state);
         assert_eq!(addr.neighborhood, recv_addr.neighborhood);
