@@ -23,7 +23,7 @@
 [![API docs](https://docs.rs/lagoinha/badge.svg)](https://docs.rs/lagoinha)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-Lagoinha is a package that uses public APIs to fetch addresses using the Brazilian Postal Code (CEP). This package cuncurrently calls all the supported APIs and returns the first result to arrive.
+Lagoinha is a package that uses public APIs to fetch addresses using the Brazilian Postal Code (CEP). This package concurrently calls all the supported APIs and returns the first result to arrive.
 
 ### Diagram:
 
@@ -31,7 +31,7 @@ Lagoinha is a package that uses public APIs to fetch addresses using the Brazili
 
 ### Why this name ?
 
-It means "little pond". It is a Brazillian meme ! Check the video[vídeo](https://www.youtube.com/watch?v=C1Sd_RWF5ks)!
+It means "little pond". It is a Brazillian meme ! Check the [vídeo](https://www.youtube.com/watch?v=C1Sd_RWF5ks)!
 
 ### Instalation
 
@@ -51,7 +51,7 @@ fn main() {
 ```
 The first method should be similar for any async runtime.
 
-Or in a Async function (example using Tokio):
+Or in an Async function (example using Tokio):
 
 ```rust
 use lagoinha;
