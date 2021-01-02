@@ -16,7 +16,7 @@
 //!
 //!#[tokio::main]
 //!async fn main() {    
-//!    let addr = lagoinha::get_address("70150903").await;
+//!    let addr = lagoinha::get_address("70150903", None).await;
 //!    println!("{:#?}", addr);
 //!}
 //!```
@@ -39,6 +39,7 @@ const SEND_ERROR: &str =
 
 async fn service_channel_request<Fut, Addr>(
     f: Fut,
+    error_timeout: u64,
     mut tx: mpsc::Sender<Result<services::Address, Error>>,
 ) where
     Fut: Future<Output = Result<Addr, Error>>,
@@ -57,18 +58,35 @@ async fn service_channel_request<Fut, Addr>(
                 .await
                 .map_err(|e| println!("{} with error: {}", SEND_ERROR, e.to_string()))
                 .ok();
-            task::sleep(Duration::from_secs(5)).await;
+            task::sleep(Duration::from_secs(error_timeout)).await;
         }
     }
 }
 
-pub async fn get_address(cep: &str) -> Result<Address, Error> {
+/// get_address runs concurent calls to available services requesting the address related to the provided `cep`,
+/// and with a error_timeout in seconds in case some services fail.
+///
+/// # Arguments
+///
+/// * `cep` - A str pointer slice that holds the Brazilian postal code.
+/// * `error_timeout` - Option<u64> timeout in seconds in case some services come to fail. It defaults to 2 if None is provided, and has a minimum value of 1.
+///    This prevents early failures from canceling possible success resuts from other seervices.
+///
+pub async fn get_address(cep: &str, error_timeout: Option<u64>) -> Result<Address, Error> {
+    let error_timeout = match error_timeout {
+        Some(cd) => match cd {
+            cd if cd < 2 => 1,
+            cd => cd,
+        },
+        None => 2 as u64,
+    };
+
     let (tx, mut rx) = mpsc::channel::<Result<services::Address, Error>>(3);
 
     select! {
-        () = service_channel_request(services::viacep::request(cep), tx.clone()).fuse() => "viacep",
-        () = service_channel_request(services::correios::request(cep), tx.clone()).fuse() => "correios",
-        () = service_channel_request(services::cepla::request(cep), tx.clone()).fuse() => "cepla",
+        () = service_channel_request(services::viacep::request(cep), error_timeout, tx.clone()).fuse() => "viacep",
+        () = service_channel_request(services::correios::request(cep), error_timeout, tx.clone()).fuse() => "correios",
+        () = service_channel_request(services::cepla::request(cep), error_timeout, tx.clone()).fuse() => "cepla",
     };
 
     let mut error_list: Vec<Error> = Vec::new();
@@ -120,7 +138,7 @@ mod tests {
             state: "DF".to_string(),
         };
 
-        let recv_addr = super::get_address("70150903").await.unwrap();
+        let recv_addr = super::get_address("70150903", None).await.unwrap();
         assert_eq!(addr.city, recv_addr.city);
         assert_eq!(addr.state, recv_addr.state);
         assert_eq!(addr.neighborhood, recv_addr.neighborhood);
@@ -138,7 +156,7 @@ mod tests {
             state: "DF".to_string(),
         };
 
-        let recv_addr = async_std::task::block_on(super::get_address("70150903")).unwrap();
+        let recv_addr = async_std::task::block_on(super::get_address("70150903", None)).unwrap();
         assert_eq!(addr.city, recv_addr.city);
         assert_eq!(addr.state, recv_addr.state);
         assert_eq!(addr.neighborhood, recv_addr.neighborhood);
@@ -161,7 +179,7 @@ mod tests {
             },
         };
 
-        let recv_err = async_std::task::block_on(super::get_address("123")).unwrap_err();
+        let recv_err = async_std::task::block_on(super::get_address("123", None)).unwrap_err();
         assert!(variant_eq(&recv_err.kind, &err.kind));
         assert!(variant_eq(&recv_err.source, &err.source));
     }
@@ -177,7 +195,7 @@ mod tests {
             },
         };
 
-        let recv_err = super::get_address("123").await.unwrap_err();
+        let recv_err = super::get_address("123", None).await.unwrap_err();
         assert!(variant_eq(&recv_err.kind, &err.kind));
         assert!(variant_eq(&recv_err.source, &err.source));
     }
