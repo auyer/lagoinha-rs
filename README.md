@@ -1,13 +1,3 @@
-# lagoinha-rs
-
-> Rust project inspired by https://github.com/IgorHalfeld/lagoinha used to retrieve Addresses from the Brazilian Postal Code (CEP)
-
-❌ - This project is in the first stages of development, and should not be used in production.
-
-✔️ - Contributions and reviews are appreciated !
-
----
-
 <p align="center">
   <!-- <img src="assets/logo.png" width="100px" /> -->
   <h3 align="center">
@@ -21,6 +11,10 @@
     Readme in <a href="README-pt.md">Português</a>
   </p>
 </p>
+
+> Rust project inspired by https://github.com/IgorHalfeld/lagoinha used to retrieve Addresses from the Brazilian Postal Code (CEP)
+
+✔️ - Contributions and reviews are appreciated !
 
 ---
 
@@ -42,7 +36,7 @@ It means "little pond". It is a Brazillian meme ! Check the video[vídeo](https:
 ### Instalation
 
 ```toml
-lagoinha-rs = "0.1"
+lagoinha-rs = "0.2"
 ```
 
 ### How to use it

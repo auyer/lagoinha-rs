@@ -1,13 +1,3 @@
-# lagoinha-rs
-
-> Rust project inspired by https://github.com/IgorHalfeld/lagoinha used to retrieve Addresses from the Brazilian Postal Code (CEP)
-
-❌ - This project is in the first stages of development, and should not be used in production.
-
-✔️ - Contributions and reviews are appreciated !
-
----
-
 <p align="center">
   <!-- <img src="assets/logo.png" width="100px" /> -->
   <h3 align="center">
@@ -21,6 +11,10 @@
     Readme in <a href="README.md">English</a>
   </p>
 </p>
+
+> Rust project inspired by https://github.com/IgorHalfeld/lagoinha used to retrieve Addresses from the Brazilian Postal Code (CEP)
+
+✔️ - Contributions and reviews are appreciated !
 
 ---
 
@@ -40,7 +34,7 @@ Lagoinha é basicamente um pacote que usa as APIs públicas para pegar o endere�
 ### Instalação
 
 ```toml
-lagoinha-rs = "0.1"
+lagoinha-rs = "0.2"
 ```
 
 ### How to use it
