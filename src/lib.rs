@@ -28,8 +28,10 @@ use error::Error;
 use error::Source::LagoinhaLib;
 use services::Address;
 
+use async_std::task;
 use futures::channel::mpsc;
-use futures::{future::FutureExt, sink::SinkExt};
+use futures::{select, future::FutureExt, sink::SinkExt};
+use std::time::Duration;
 
 const SEND_ERROR: &str =
     "Failed awaiting channel send. This should not happen. Please contact the developer";
@@ -48,6 +50,7 @@ async fn viacep_requet(cep: &str, mut tx: mpsc::Sender<Result<services::Address,
                 .await
                 .map_err(|e| println!("{} with error: {}", SEND_ERROR, e.to_string()))
                 .ok();
+            async_std::task::sleep(Duration::from_secs(5)).await;
         }
     }
 }
@@ -66,6 +69,7 @@ async fn cepla_requet(cep: &str, mut tx: mpsc::Sender<Result<services::Address, 
                 .await
                 .map_err(|e| println!("{} with error: {}", SEND_ERROR, e.to_string()))
                 .ok();
+            task::sleep(Duration::from_secs(5)).await;
         }
     }
 }
@@ -84,23 +88,23 @@ async fn correios_requet(cep: &str, mut tx: mpsc::Sender<Result<services::Addres
                 .await
                 .map_err(|e| println!("{} with error: {}", SEND_ERROR, e.to_string()))
                 .ok();
+            task::sleep(Duration::from_secs(5)).await;
         }
     }
 }
 
 pub async fn get_address(cep: &str) -> Result<Address, Error> {
-    let (tx, mut rx) = mpsc::channel::<Result<services::Address, Error>>(1);
+    let (tx, mut rx) = mpsc::channel::<Result<services::Address, Error>>(3);
 
-    futures::select! {
+    select! {
         () = viacep_requet(cep, tx.clone()).fuse() => "viacep",
         () = cepla_requet(cep, tx.clone()).fuse() => "cepla",
         () = correios_requet(cep, tx.clone()).fuse() => "correios",
-        default => unreachable!()
     };
 
     let mut error_list: Vec<Error> = Vec::new();
 
-    for _ in 0..2 {
+    for _ in 0..3 {
         let read = rx.try_next();
         match read {
             Ok(read_address) => match read_address {
@@ -134,6 +138,8 @@ pub async fn get_address(cep: &str) -> Result<Address, Error> {
 
 #[cfg(test)]
 mod tests {
+    use crate::error;
+
     #[tokio::test]
     async fn test_channels_tokio() {
         let addr = super::services::Address {
@@ -163,10 +169,48 @@ mod tests {
             state: "DF".to_string(),
         };
 
-        let recv_addr = async_std::task::block_on(super::get_address("70150903")).unwrap();
+        let recv_addr =
+            async_std::task::block_on(super::get_address("70150903")).unwrap();
         assert_eq!(addr.city, recv_addr.city);
         assert_eq!(addr.state, recv_addr.state);
         assert_eq!(addr.neighborhood, recv_addr.neighborhood);
         // the other fields, like cep can come with different formating
+    }
+
+    // variant_eq is a test helper that checks if a and b are the same Enum variants, disregarding its values
+    fn variant_eq<T>(a: &T, b: &T) -> bool {
+        std::mem::discriminant(a) == std::mem::discriminant(b)
+    }
+
+    #[test]
+    fn all_services_error() {
+        let err = error::Error {
+            source: error::Source::LagoinhaLib,
+            kind: error::Kind::AllServicesRetunedErrors {
+                e1: "".to_owned(),
+                e2: "".to_owned(),
+                e3: "".to_owned(),
+            },
+        };
+
+        let recv_err = async_std::task::block_on(super::get_address("123")).unwrap_err();
+        assert!(variant_eq(&recv_err.kind, &err.kind));
+        assert!(variant_eq(&recv_err.source, &err.source));
+    }
+
+    #[tokio::test]
+    async fn all_services_error_tokio() {
+        let err = error::Error {
+            source: error::Source::LagoinhaLib,
+            kind: error::Kind::AllServicesRetunedErrors {
+                e1: "".to_owned(),
+                e2: "".to_owned(),
+                e3: "".to_owned(),
+            },
+        };
+
+        let recv_err = super::get_address("123").await.unwrap_err();
+        assert!(variant_eq(&recv_err.kind, &err.kind));
+        assert!(variant_eq(&recv_err.source, &err.source));
     }
 }
