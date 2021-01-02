@@ -13,7 +13,7 @@ impl fmt::Display for Source {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Source::Viacep => write!(f, "Viacep"),
-            Source::Correios => write!(f, "Cepla"),
+            Source::Correios => write!(f, "Correios"),
             Source::Cepla => write!(f, "Cepla"),
             Source::LagoinhaLib => write!(f, "Lagoinha"),
         }
