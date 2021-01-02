@@ -47,8 +47,8 @@ lagoinha-rs = "0.1"
 
 ### How to use it
 ```rust
-extern crate lagoinha;
-extern crate async_std;
+use lagoinha;
+use async_std;
 
 fn main() {
     let addr = async_std::task::block_on(lagoinha::get_address("CEP_GOES_HERE"));
@@ -60,12 +60,12 @@ The fisrt method should be similar for any async runtime.
 Or in a Async function (example using Tokio):
 
 ```rust
-extern crate lagoinha;
-extern crate tokio;
+use lagoinha;
+use tokio;
 
 #[tokio::main]
 async fn main() {
-    let addr = lagoinha::get_address("CEP_GOES_HERE").await;
+    let addr = lagoinha::get_address("CEP_GOES_HERE", None).await;
     println!("{:#?}", addr);
 }
 ```
@@ -78,6 +78,7 @@ To run them, use the commands below.
 ```bash
 # these examples can be run with a specific CEP (or leave blank for default value)
 cargo run --example get_address 20940040
+cargo run --example get_address_tokio 20940040
 cargo run --example standalone_services 20940040
 
 ```
@@ -100,7 +101,7 @@ This library uses [isahc](https://github.com/sagebind/isahc) as its http client 
 - [x] Separate Two languages in README.md
 - [ ] Documentation
 - [x] Invest in better error handling
-- [ ] Unhappy path testing
+- [x] Unhappy path testing
 - [ ] Validate input
 - [ ] Different compilation features
 - [ ] Abstractions: this will allow for mocking, and testing all paths without calls to the APIs

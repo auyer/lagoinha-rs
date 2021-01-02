@@ -45,11 +45,11 @@ lagoinha-rs = "0.1"
 
 ### How to use it
 ```rust
-extern crate lagoinha;
-extern crate async_std;
+use lagoinha;
+use async_std;
 
 fn main() {
-    let addr = async_std::task::block_on(lagoinha::get_address("CEP_GOES_HERE"));
+    let addr = async_std::task::block_on(lagoinha::get_address("CEP_GOES_HERE", None));
     println!("{:#?}", addr);
 }
 ```
@@ -58,12 +58,12 @@ O primeiro método deve ser similar para qualquer *async runtime*.
 Ouem uma função Async (examplo usando Tokio):
 
 ```rust
-extern crate lagoinha;
-extern crate tokio;
+use lagoinha;
+use tokio;
 
 #[tokio::main]
 async fn main() {
-    let addr = lagoinha::get_address("CEP_GOES_HERE").await;
+    let addr = lagoinha::get_address("CEP_GOES_HERE", None).await;
     println!("{:#?}", addr);
 }
 ```

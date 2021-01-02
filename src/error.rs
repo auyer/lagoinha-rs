@@ -52,28 +52,48 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.kind {
             Kind::UnknownServerError { code } => {
-                write!(f, "recieved an unknown error from server with code {} from service {}." , code, self.source)
-            },
+                write!(
+                    f,
+                    "recieved an unknown error from server with code {} from service {}.",
+                    code, self.source
+                )
+            }
             Kind::ServerError { code } => {
-                write!(f, "Recieved a server error {} from service {}.", code, self.source)
-            },
+                write!(
+                    f,
+                    "Recieved a server error {} from service {}.",
+                    code, self.source
+                )
+            }
             Kind::ClientError { code } => {
-                write!(f, "Recieved a client error {} from service {}.", code, self.source)
-            },
-            Kind::BodyParsingError { error, body} => {
+                write!(
+                    f,
+                    "Recieved a client error {} from service {}.",
+                    code, self.source
+                )
+            }
+            Kind::BodyParsingError { error, body } => {
                 write!(f, "Failed to parse body with error {} from service {}. This should not happen, submit this body in a GitHub issue: {}", error, self.source, body)
-            },
+            }
             Kind::MissingBodyError => {
-                write!(f, "Recieved a result without a body from service {}.", self.source)
-            },
+                write!(
+                    f,
+                    "Recieved a result without a body from service {}.",
+                    self.source
+                )
+            }
             Kind::InputError => {
                 write!(f, "The CEP is malformatted. It should be follow this templates: 12345-678 or 12345678")
-            },
+            }
             Kind::UnexpectedLibraryError => {
                 write!(f,"Recieved an unexpected error from the library from service {}. Please send an issue in GitHub.", self.source)
-            },
-            Kind::AllServicesRetunedErrors{e1,e2, e3} => {
-                write!(f, "All services returned an error. \n: {}, \n: {}, \n: {}", e1, e2, e3)
+            }
+            Kind::AllServicesRetunedErrors { e1, e2, e3 } => {
+                write!(
+                    f,
+                    "All services returned an error. \n: {}, \n: {}, \n: {}",
+                    e1, e2, e3
+                )
             }
         }
     }

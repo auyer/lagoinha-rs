@@ -17,6 +17,7 @@ pub struct Address {
 }
 
 pub trait Addressable {
+    /// to_address function converts specific_services::Address to services::Address (unified struct)
     fn to_address(&self) -> Address;
 }
 
