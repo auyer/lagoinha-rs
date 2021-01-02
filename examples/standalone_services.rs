@@ -1,10 +1,11 @@
 // examples/standalone_services.rs
 //!Run `run --example standalone_services yourcep` to run this example
-extern crate lagoinha;
+use lagoinha;
+// optional trait for standard type conversion
+use lagoinha::services::Addressable;
 
 use std::env;
-
-extern crate tokio;
+use tokio;
 #[tokio::main]
 async fn main() {
     let args: Vec<String> = env::args().collect();
@@ -16,12 +17,21 @@ async fn main() {
     let addr = lagoinha::services::viacep::request(cep).await;
     println!("\nviacep");
     println!("{:#?}", addr);
+    // optinal to_address from Addressable trait converts specific address to general address
+    println!("\n--converted:");
+    println!("{:#?}", addr.unwrap().to_address());
 
     let addr = lagoinha::services::correios::request(cep).await;
     println!("\ncorreios");
     println!("{:#?}", addr);
+    // optinal to_address from Addressable trait converts specific address to general address
+    println!("\n--converted:");
+    println!("{:#?}", addr.unwrap().to_address());
 
     let addr = lagoinha::services::cepla::request(cep).await;
     println!("\ncepla");
     println!("{:#?}", addr);
+    // optinal to_address from Addressable trait converts specific address to general address
+    println!("\n--converted:");
+    println!("{:#?}", addr.unwrap().to_address());
 }

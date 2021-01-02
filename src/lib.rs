@@ -27,55 +27,24 @@ pub mod services;
 use error::Error;
 use error::Source::LagoinhaLib;
 use services::Address;
+use services::Addressable;
 
 use async_std::task;
 use futures::channel::mpsc;
-use futures::{select, future::FutureExt, sink::SinkExt};
+use futures::{future::FutureExt, select, sink::SinkExt, Future};
 use std::time::Duration;
 
 const SEND_ERROR: &str =
     "Failed awaiting channel send. This should not happen. Please contact the developer";
 
-async fn viacep_requet(cep: &str, mut tx: mpsc::Sender<Result<services::Address, Error>>) {
-    let addr = services::viacep::request(cep).await;
-    match addr {
-        Ok(addr) => {
-            tx.send(Ok(addr.to_address()))
-                .await
-                .map_err(|e| println!("{} with error: {}", SEND_ERROR, e.to_string()))
-                .ok();
-        }
-        Err(err) => {
-            tx.send(Err(err))
-                .await
-                .map_err(|e| println!("{} with error: {}", SEND_ERROR, e.to_string()))
-                .ok();
-            async_std::task::sleep(Duration::from_secs(5)).await;
-        }
-    }
-}
-
-async fn cepla_requet(cep: &str, mut tx: mpsc::Sender<Result<services::Address, Error>>) {
-    let addr = services::cepla::request(cep).await;
-    match addr {
-        Ok(addr) => {
-            tx.send(Ok(addr.to_address()))
-                .await
-                .map_err(|e| println!("{} with error: {}", SEND_ERROR, e.to_string()))
-                .ok();
-        }
-        Err(err) => {
-            tx.send(Err(err))
-                .await
-                .map_err(|e| println!("{} with error: {}", SEND_ERROR, e.to_string()))
-                .ok();
-            task::sleep(Duration::from_secs(5)).await;
-        }
-    }
-}
-
-async fn correios_requet(cep: &str, mut tx: mpsc::Sender<Result<services::Address, Error>>) {
-    let addr = services::correios::request(cep).await;
+async fn service_channel_request<Fut, Addr>(
+    f: Fut,
+    mut tx: mpsc::Sender<Result<services::Address, Error>>,
+) where
+    Fut: Future<Output = Result<Addr, Error>>,
+    Addr: Addressable,
+{
+    let addr = f.await;
     match addr {
         Ok(addr) => {
             tx.send(Ok(addr.to_address()))
@@ -97,9 +66,9 @@ pub async fn get_address(cep: &str) -> Result<Address, Error> {
     let (tx, mut rx) = mpsc::channel::<Result<services::Address, Error>>(3);
 
     select! {
-        () = viacep_requet(cep, tx.clone()).fuse() => "viacep",
-        () = cepla_requet(cep, tx.clone()).fuse() => "cepla",
-        () = correios_requet(cep, tx.clone()).fuse() => "correios",
+        () = service_channel_request(services::viacep::request(cep), tx.clone()).fuse() => "viacep",
+        () = service_channel_request(services::correios::request(cep), tx.clone()).fuse() => "correios",
+        () = service_channel_request(services::cepla::request(cep), tx.clone()).fuse() => "cepla",
     };
 
     let mut error_list: Vec<Error> = Vec::new();
@@ -169,8 +138,7 @@ mod tests {
             state: "DF".to_string(),
         };
 
-        let recv_addr =
-            async_std::task::block_on(super::get_address("70150903")).unwrap();
+        let recv_addr = async_std::task::block_on(super::get_address("70150903")).unwrap();
         assert_eq!(addr.city, recv_addr.city);
         assert_eq!(addr.state, recv_addr.state);
         assert_eq!(addr.neighborhood, recv_addr.neighborhood);

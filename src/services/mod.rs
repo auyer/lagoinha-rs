@@ -16,9 +16,13 @@ pub struct Address {
     pub city: String,
 }
 
-impl viacep::Address {
+pub trait Addressable {
+    fn to_address(&self) -> Address;
+}
+
+impl Addressable for viacep::Address {
     /// to_address implementtion converts services::viacep::Address to services::Address
-    pub fn to_address(&self) -> Address {
+    fn to_address(&self) -> Address {
         let addr = Address {
             cep: self.cep.clone(),
             address: self.address.clone(),
@@ -31,9 +35,9 @@ impl viacep::Address {
     }
 }
 
-impl correios::Address {
+impl Addressable for correios::Address {
     /// to_address implementtion converts services::correios::Address to services::Address
-    pub fn to_address(&self) -> Address {
+    fn to_address(&self) -> Address {
         let addr = Address {
             cep: self.cep.clone(),
             address: self.address.clone(),
@@ -46,9 +50,9 @@ impl correios::Address {
     }
 }
 
-impl cepla::Address {
+impl Addressable for cepla::Address {
     /// to_address implementtion converts services::cepla::Address to services::Address
-    pub fn to_address(&self) -> Address {
+    fn to_address(&self) -> Address {
         let addr = Address {
             cep: self.cep.clone(),
             address: self.address.clone(),
@@ -66,6 +70,7 @@ mod tests {
     use super::cepla;
     use super::correios;
     use super::viacep;
+    use super::Addressable;
 
     #[test]
     fn viacep_conversion() {
