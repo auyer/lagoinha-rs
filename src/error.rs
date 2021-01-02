@@ -30,16 +30,16 @@ pub struct Error {
 
 #[derive(Debug, PartialEq)]
 pub enum Kind {
-    /// UnknownServerError represents unmapped server errors, with the recieved code
+    /// UnknownServerError represents unmapped server errors, with the received code
     UnknownServerError { code: u16 },
-    /// ServerError represents status codes int the 5xx range
+    /// ServerError represents status codes in the 5xx range
     ServerError { code: u16 },
-    /// ServerError represents status codes int the 4xx range
+    /// ServerError represents status codes in the 4xx range
     ClientError { code: u16 },
-    /// BodyParsingError represents an error where the recieved body does not match with the expected schema
+    /// BodyParsingError represents an error where the received body does not match with the expected schema
     BodyParsingError { error: String, body: String },
-    /// AllServicesRetunedErrors indicates that each one of the called services returned an error
-    AllServicesRetunedErrors { e1: String, e2: String, e3: String },
+    /// AllServicesReturnedErrors indicates that each one of the called services returned an error
+    AllServicesReturnedErrors { e1: String, e2: String, e3: String },
     /// MissingBodyError indicates that the respose had a missing body
     MissingBodyError,
     /// InputError is unused at the momment, but is intended to represent an error with the input
@@ -54,21 +54,21 @@ impl fmt::Display for Error {
             Kind::UnknownServerError { code } => {
                 write!(
                     f,
-                    "recieved an unknown error from server with code {} from service {}.",
+                    "Received an unknown error from server with code {} from service {}.",
                     code, self.source
                 )
             }
             Kind::ServerError { code } => {
                 write!(
                     f,
-                    "Recieved a server error {} from service {}.",
+                    "Received a server error {} from service {}.",
                     code, self.source
                 )
             }
             Kind::ClientError { code } => {
                 write!(
                     f,
-                    "Recieved a client error {} from service {}.",
+                    "Received a client error {} from service {}.",
                     code, self.source
                 )
             }
@@ -78,17 +78,17 @@ impl fmt::Display for Error {
             Kind::MissingBodyError => {
                 write!(
                     f,
-                    "Recieved a result without a body from service {}.",
+                    "Received a result without a body from service {}.",
                     self.source
                 )
             }
             Kind::InputError => {
-                write!(f, "The CEP is malformatted. It should be follow this templates: 12345-678 or 12345678")
+                write!(f, "The CEP is malformatted. It should follow this templates: 12345-678 or 12345678")
             }
             Kind::UnexpectedLibraryError => {
-                write!(f,"Recieved an unexpected error from the library from service {}. Please send an issue in GitHub.", self.source)
+                write!(f,"Received an unexpected error from the library from service {}. Please send an issue in GitHub.", self.source)
             }
-            Kind::AllServicesRetunedErrors { e1, e2, e3 } => {
+            Kind::AllServicesReturnedErrors { e1, e2, e3 } => {
                 write!(
                     f,
                     "All services returned an error. \n: {}, \n: {}, \n: {}",

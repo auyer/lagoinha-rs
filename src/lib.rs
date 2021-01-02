@@ -1,10 +1,10 @@
 #![crate_name = "lagoinha"]
-//! Lagoinha is a library that retrieve Addresses from the Brazilian Postal Code (CEP) using multiple APIs asynchronously, and returns the result from the first one to respond.
+//! Lagoinha is a library that retrieves Addresses from the Brazilian Postal Code (CEP) using multiple APIs asynchronously, and returns the result from the first one to respond.
 //! It uses async/.await and the Futures library for its asyncronous features, and can be used with most runtimes.
 //!
 //! # Services
 //!
-//! Currenlty the services used are : correios, viacep and cepla
+//! Currently the services used are : correios, viacep and cepla
 //! It is expected to support adding a custom service to the pool in the future, and the ability to disable the default ones.
 //!
 //! While the default http library is Hyper, the CepLá service has an issue with its header implementation, and so the curl library was used. More information in the docs for this service.
@@ -63,14 +63,14 @@ async fn service_channel_request<Fut, Addr>(
     }
 }
 
-/// get_address runs concurent calls to available services requesting the address related to the provided `cep`,
+/// get_address runs concurrent calls to available services requesting the address related to the provided `cep`,
 /// and with a error_timeout in seconds in case some services fail.
 ///
 /// # Arguments
 ///
 /// * `cep` - A str pointer slice that holds the Brazilian postal code.
 /// * `error_timeout` - Option<u64> timeout in seconds in case some services come to fail. It defaults to 2 if None is provided, and has a minimum value of 1.
-///    This prevents early failures from canceling possible success resuts from other seervices.
+///    This prevents early failures from cancelling possible success results from other services.
 ///
 pub async fn get_address(cep: &str, error_timeout: Option<u64>) -> Result<Address, Error> {
     let error_timeout = match error_timeout {
@@ -115,7 +115,7 @@ pub async fn get_address(cep: &str, error_timeout: Option<u64>) -> Result<Addres
 
     Err(Error {
         source: error::Source::LagoinhaLib,
-        kind: error::Kind::AllServicesRetunedErrors {
+        kind: error::Kind::AllServicesReturnedErrors {
             e1: format!("{}", error_list[0]),
             e2: format!("{}", error_list[1]),
             e3: format!("{}", error_list[2]),
@@ -172,7 +172,7 @@ mod tests {
     fn all_services_error() {
         let err = error::Error {
             source: error::Source::LagoinhaLib,
-            kind: error::Kind::AllServicesRetunedErrors {
+            kind: error::Kind::AllServicesReturnedErrors {
                 e1: "".to_owned(),
                 e2: "".to_owned(),
                 e3: "".to_owned(),
@@ -188,7 +188,7 @@ mod tests {
     async fn all_services_error_tokio() {
         let err = error::Error {
             source: error::Source::LagoinhaLib,
-            kind: error::Kind::AllServicesRetunedErrors {
+            kind: error::Kind::AllServicesReturnedErrors {
                 e1: "".to_owned(),
                 e2: "".to_owned(),
                 e3: "".to_owned(),

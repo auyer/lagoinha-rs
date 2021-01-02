@@ -93,7 +93,7 @@ pub async fn request(cep: &str) -> Result<Address, Error> {
 }
 
 // these structs are used to define the entire path to the XML. There must be a better way to do this...
-// only the Address struct is usefull.
+// only the Address struct is useful.
 #[derive(Deserialize, Serialize, Debug)]
 struct BodyTag {
     #[serde(rename = "Body")]

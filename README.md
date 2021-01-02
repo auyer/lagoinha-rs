@@ -23,7 +23,7 @@
 [![API docs](https://docs.rs/lagoinha/badge.svg)](https://docs.rs/lagoinha)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-Lagoinha is a package that uses public APIs to fetch addresses using the Brazilian Postal Code (CEP). This package cuncurrenlty calls all the supported APIs and returns the first result.
+Lagoinha is a package that uses public APIs to fetch addresses using the Brazilian Postal Code (CEP). This package cuncurrently calls all the supported APIs and returns the first result to arrive.
 
 ### Diagram:
 
@@ -49,7 +49,7 @@ fn main() {
     println!("{:#?}", addr);
 }
 ```
-The fisrt method should be similar for any async runtime.
+The first method should be similar for any async runtime.
 
 Or in a Async function (example using Tokio):
 
